@@ -315,7 +315,7 @@ io.on('connection', (socket) => {
  * ------------------------------------------
  * Listens on designated port (env.PORT or port 5000 fallback).
  */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 httpServer.listen(PORT, () => {
   console.log(`🚀 SkillMint server running on port ${PORT}`);
 });
