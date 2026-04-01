@@ -31,33 +31,33 @@ export default function Login() {
   return (
     <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
       {/* Left Panel */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-mint-dark via-mint to-emerald-400 p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-mint-dark via-mint to-[#00E59D] p-16 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <div key={i} className="absolute rounded-full border border-white"
-              style={{ width: `${(i + 1) * 120}px`, height: `${(i + 1) * 120}px`, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+              style={{ width: `${(i + 1) * 150}px`, height: `${(i + 1) * 150}px`, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
           ))}
         </div>
         <div className="relative z-10">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-              <Zap size={18} className="text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+              <Zap size={20} className="text-white fill-current" />
             </div>
-            <span className="font-display font-bold text-2xl text-white">SkillMint</span>
+            <span className="font-display font-extrabold text-2xl text-white tracking-tight">Skill<span className="text-white/80">Mint</span></span>
           </div>
         </div>
-        <div className="relative z-10">
-          <h2 className="font-display font-bold text-4xl text-white leading-tight mb-4">
-            Turn your skills<br />into income.
+        <div className="relative z-10 max-w-lg">
+          <h2 className="font-display font-extrabold text-5xl text-white leading-[1.1] mb-6 tracking-tighter">
+            Elevate your<br />academic hustle.
           </h2>
-          <p className="text-white/80 text-lg">
-            The student freelance marketplace where talent meets opportunity.
+          <p className="text-white/90 text-xl font-medium leading-relaxed">
+            The premium student-powered marketplace built for ambitious creators and business owners.
           </p>
-          <div className="mt-8 grid grid-cols-3 gap-4">
-            {[['2.4K+', 'Students'], ['850+', 'Gigs'], ['98%', 'Satisfaction']].map(([num, label]) => (
-              <div key={label} className="bg-white/15 backdrop-blur-sm rounded-2xl p-4 text-center">
-                <div className="font-display font-bold text-2xl text-white">{num}</div>
-                <div className="text-white/70 text-sm mt-0.5">{label}</div>
+          <div className="mt-12 grid grid-cols-3 gap-6">
+            {[['2.4K+', 'Active Learners'], ['850+', 'Expert Gigs'], ['99%', 'Success Rate']].map(([num, label]) => (
+              <div key={label} className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 text-center shadow-lg">
+                <div className="font-display font-extrabold text-2xl text-white tracking-tight">{num}</div>
+                <div className="text-white/60 text-[10px] uppercase font-bold tracking-widest mt-1">{label}</div>
               </div>
             ))}
           </div>
@@ -71,15 +71,15 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-mint rounded-lg flex items-center justify-center">
-              <Zap size={15} className="text-white" />
+          <div className="lg:hidden flex items-center gap-3 mb-10">
+            <div className="w-9 h-9 bg-mint rounded-xl flex items-center justify-center shadow-lg shadow-mint/20">
+              <Zap size={18} className="text-white" />
             </div>
-            <span className="font-display font-bold text-xl">Skill<span className="text-mint">Mint</span></span>
+            <span className="font-display font-extrabold text-2xl tracking-tight text-gray-900">Skill<span className="text-mint">Mint</span></span>
           </div>
 
-          <h1 className="font-display font-bold text-3xl text-gray-900 mb-2">Welcome back</h1>
-          <p className="text-gray-500 mb-8">Sign in to your SkillMint account</p>
+          <h1 className="font-display font-extrabold text-4xl text-gray-900 mb-2 tracking-tight">Welcome back</h1>
+          <p className="text-gray-500 mb-10 font-medium">Continue your professional journey on SkillMint.</p>
 
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">
@@ -122,12 +122,12 @@ export default function Login() {
               id="login-submit"
               type="submit"
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-3 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-base font-bold shadow-2xl shadow-mint/20 mt-8"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
               ) : (
-                <>Sign In <ArrowRight size={16} /></>
+                <>Sign In <ArrowRight size={18} /></>
               )}
             </button>
           </form>

@@ -32,27 +32,27 @@ export default function Signup() {
   return (
     <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
       {/* Left Panel */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-mint-dark via-mint to-emerald-400 p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-mint-dark via-mint to-[#00E59D] p-16 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <div key={i} className="absolute rounded-full border border-white"
-              style={{ width: `${(i + 1) * 120}px`, height: `${(i + 1) * 120}px`, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+              style={{ width: `${(i + 1) * 150}px`, height: `${(i + 1) * 150}px`, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
           ))}
         </div>
         <div className="relative z-10">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-              <Zap size={18} className="text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+              <Zap size={20} className="text-white fill-current" />
             </div>
-            <span className="font-display font-bold text-2xl text-white">SkillMint</span>
+            <span className="font-display font-extrabold text-2xl text-white tracking-tight">Skill<span className="text-white/80">Mint</span></span>
           </div>
         </div>
-        <div className="relative z-10">
-          <h2 className="font-display font-bold text-4xl text-white leading-tight mb-4">
-            Join thousands of<br />student creators.
+        <div className="relative z-10 max-w-lg">
+          <h2 className="font-display font-extrabold text-5xl text-white leading-[1.1] mb-6 tracking-tighter">
+            Join the<br />elite network.
           </h2>
-          <p className="text-white/80 text-lg">
-            Start freelancing or hire talented students today — completely free to join.
+          <p className="text-white/90 text-xl font-medium leading-relaxed">
+            Connect with top-tier student talent and turn your skills into a premium brand.
           </p>
         </div>
       </div>
@@ -64,18 +64,18 @@ export default function Signup() {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-mint rounded-lg flex items-center justify-center">
-              <Zap size={15} className="text-white" />
+          <div className="lg:hidden flex items-center gap-3 mb-10">
+            <div className="w-9 h-9 bg-mint rounded-xl flex items-center justify-center shadow-lg shadow-mint/20">
+              <Zap size={18} className="text-white" />
             </div>
-            <span className="font-display font-bold text-xl">Skill<span className="text-mint">Mint</span></span>
+            <span className="font-display font-extrabold text-2xl tracking-tight text-gray-900">Skill<span className="text-mint">Mint</span></span>
           </div>
 
-          <h1 className="font-display font-bold text-3xl text-gray-900 mb-2">Create your account</h1>
-          <p className="text-gray-500 mb-6">Join SkillMint — it's free!</p>
+          <h1 className="font-display font-extrabold text-4xl text-gray-900 mb-2 tracking-tight">Get started</h1>
+          <p className="text-gray-500 mb-8 font-medium">Create your SkillMint profile in seconds.</p>
 
           {/* Role Toggle */}
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-4 mb-8">
             {[
               { value: 'BUYER', label: "I'm Hiring", icon: ShoppingBag },
               { value: 'SELLER', label: "I'm Freelancing", icon: Briefcase },
@@ -84,13 +84,13 @@ export default function Signup() {
                 key={value}
                 type="button"
                 onClick={() => setForm(p => ({ ...p, role: value }))}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 text-sm font-bold transition-all duration-300 ${
                   form.role === value
-                    ? 'border-mint bg-mint/5 text-mint'
-                    : 'border-gray-200 text-gray-500 hover:border-mint/40'
+                    ? 'border-mint bg-mint-light/50 text-mint shadow-xl shadow-mint/5 scale-105'
+                    : 'border-gray-100 bg-white text-gray-400 hover:border-mint/20'
                 }`}
               >
-                <Icon size={16} />
+                <Icon size={20} className={form.role === value ? 'text-mint' : 'text-gray-300'} />
                 {label}
               </button>
             ))}
@@ -132,10 +132,10 @@ export default function Signup() {
               </div>
             </div>
             <button id="signup-submit" type="submit" disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-3 disabled:opacity-60 disabled:cursor-not-allowed">
+              className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-base font-bold shadow-2xl shadow-mint/20 mt-8">
               {loading
-                ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                : <> Create Account <ArrowRight size={16} /></>
+                ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
+                : <> Create Account <ArrowRight size={18} /></>
               }
             </button>
           </form>

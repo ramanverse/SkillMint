@@ -30,17 +30,17 @@ export default function Sidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-mint/10">
-        <Link to="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-mint to-mint-dark rounded-lg flex items-center justify-center shadow-lg">
-            <Zap size={16} className="text-white" />
+      <div className="px-6 py-6 border-b border-mint/5">
+        <Link to="/dashboard" className="flex items-center gap-2.5 group">
+          <div className="w-9 h-9 bg-gradient-to-br from-mint to-mint-dark rounded-xl flex items-center justify-center shadow-lg shadow-mint/20 group-hover:scale-105 transition-transform duration-300">
+            <Zap size={18} className="text-white fill-current" />
           </div>
-          <span className="font-display font-bold text-xl text-gray-900">Skill<span className="text-mint">Mint</span></span>
+          <span className="font-display font-extrabold text-xl tracking-tight text-gray-900">Skill<span className="text-mint">Mint</span></span>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-4 py-6 space-y-1.5">
         {filtered.map(({ icon: Icon, label, path }) => {
           const active = location.pathname === path;
           return (
@@ -48,18 +48,18 @@ export default function Sidebar() {
               key={path}
               to={path}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 group ${
                 active
-                  ? 'bg-mint text-white shadow-md shadow-mint/30'
-                  : 'text-gray-600 hover:bg-mint/8 hover:text-mint'
+                  ? 'bg-mint text-white shadow-xl shadow-mint/25 translate-x-1'
+                  : 'text-gray-500 hover:bg-mint/5 hover:text-mint'
               }`}
             >
-              <Icon size={18} className={active ? 'text-white' : 'text-gray-400 group-hover:text-mint transition-colors'} />
+              <Icon size={19} className={active ? 'text-white' : 'text-gray-400 group-hover:text-mint transition-colors'} />
               {label}
               {active && (
                 <motion.div
                   layoutId="activeIndicator"
-                  className="ml-auto w-1.5 h-1.5 bg-white rounded-full"
+                  className="ml-auto w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
                 />
               )}
             </Link>
@@ -107,7 +107,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 fixed top-0 left-0 h-full bg-white border-r border-gray-100 shadow-sm z-40">
+      <aside className="hidden lg:flex flex-col w-60 fixed top-0 left-0 h-full bg-white/80 backdrop-blur-xl border-r border-mint/5 z-40">
         <SidebarContent />
       </aside>
 
