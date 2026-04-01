@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         String   @default("BUYER")   // BUYER | SELLER
+  bio          String?
+  skills       String   @default("[]")      // JSON array
+  profileImage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  gigs           Gig[]
+  ordersAsBuyer  Order[]   @relation("BuyerOrders")
+  ordersAsSeller Order[]   @relation("SellerOrders")
+  messages       Message[]
+}
+
+model Gig {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  description String
+  category    String
+  subcategory String   @default("")
+  tags        String   @default("[]")   // JSON array
+  images      String   @default("[]")   // JSON array
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  packages Package[]
+  orders   Order[]
+}
+
+model Package {
+  id           String   @id @default(uuid())
+  gigId        String
+  gig          Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  type         String   // basic | standard | premium
+  name         String
+  description  String
+  deliveryTime Int
+  price        Float
+  createdAt    DateTime @default(now())
+
+  orders Order[]
+}
+
+model Order {
+  id        String   @id @default(uuid())
+  buyerId   String
+  buyer     User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId  String
+  seller    User     @relation("SellerOrders", fields: [sellerId], references: [id])
+  gigId     String
+  gig       Gig      @relation(fields: [gigId], references: [id])
+  packageId String
+  package   Package  @relation(fields: [packageId], references: [id])
+  status    String   @default("PENDING")   // PENDING | IN_PROGRESS | COMPLETED | CANCELLED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+  review   Review?
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+}
