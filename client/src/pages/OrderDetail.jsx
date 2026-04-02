@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Send, Package, Clock, Star, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { io } from 'socket.io-client';
-import { useAuth, API } from '../context/AuthContext';
+import { useAuth, API, SOCKET_URL } from '../context/AuthContext';
 
 const STATUS_CONFIG = {
   PENDING: { label: 'Pending', color: 'text-amber-600 bg-amber-50', icon: Clock },
@@ -41,7 +41,7 @@ export default function OrderDetail() {
   // Socket.io
   useEffect(() => {
     if (!order) return;
-    const socket = io('http://localhost:5000', { transports: ['websocket'] });
+    const socket = io(SOCKET_URL, { transports: ['websocket'] });
     socketRef.current = socket;
 
     socket.emit('join_room', id);

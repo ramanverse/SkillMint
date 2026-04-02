@@ -22,14 +22,15 @@ export const prisma = new PrismaClient({});
 // Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: process.env.CLIENT_URL ? [process.env.CLIENT_URL, 'http://localhost:5174', 'http://localhost:5175'] : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
     methods: ['GET', 'POST'],
     credentials: true,
   },
 });
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+const allowedOrigins = process.env.CLIENT_URL ? [process.env.CLIENT_URL, 'http://localhost:5173'] : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -83,5 +84,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
-  console.log(`🚀 SkillMint server running on http://localhost:${PORT}`);
+  console.log(`🚀 SkillMint server running on port ${PORT}`);
 });

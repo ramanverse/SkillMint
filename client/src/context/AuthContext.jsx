@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api' });
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const SOCKET_URL = API_URL.replace(/\/api$/, '');
+const API = axios.create({ baseURL: API_URL });
 
 // Attach token to every request
 API.interceptors.request.use((config) => {
@@ -70,4 +72,4 @@ export const useAuth = () => {
   return ctx;
 };
 
-export { API };
+export { API, SOCKET_URL };
