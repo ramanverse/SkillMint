@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPw, setShowPw] = useState(false);
@@ -28,11 +29,24 @@ export default function Login() {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(credentialResponse.credential);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Google login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
       {/* Left Panel */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-mint-dark via-mint to-[#00E59D] p-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-25">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="absolute rounded-full border border-white"
               style={{ width: `${(i + 1) * 150}px`, height: `${(i + 1) * 150}px`, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
@@ -53,14 +67,6 @@ export default function Login() {
           <p className="text-white/90 text-xl font-medium leading-relaxed">
             The premium student-powered marketplace built for ambitious creators and business owners.
           </p>
-          <div className="mt-12 grid grid-cols-3 gap-6">
-            {[['2.4K+', 'Active Learners'], ['850+', 'Expert Gigs'], ['99%', 'Success Rate']].map(([num, label]) => (
-              <div key={label} className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 text-center shadow-lg">
-                <div className="font-display font-extrabold text-2xl text-white tracking-tight">{num}</div>
-                <div className="text-white/60 text-[10px] uppercase font-bold tracking-widest mt-1">{label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -131,6 +137,26 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          <div className="relative my-10">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-100/80"></div>
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em] font-extrabold">
+              <span className="bg-white px-4 text-gray-400/80">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center mb-6">
+            <GoogleLogin
+               onSuccess={handleGoogleSuccess}
+               onError={() => setError('Google Login Failed')}
+               useOneTap
+               theme="outline"
+               shape="pill"
+               width="384"
+            />
+          </div>
 
           <p className="text-center mt-6 text-sm text-gray-500">
             Don't have an account?{' '}

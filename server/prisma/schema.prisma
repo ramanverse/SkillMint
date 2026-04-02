@@ -22,6 +22,7 @@ model User {
   ordersAsBuyer  Order[]   @relation("BuyerOrders")
   ordersAsSeller Order[]   @relation("SellerOrders")
   messages       Message[]
+  requests       GigRequest[]
 }
 
 model Gig {
@@ -90,4 +91,18 @@ model Review {
   rating    Int
   comment   String
   createdAt DateTime @default(now())
+}
+
+model GigRequest {
+  id          String   @id @default(uuid())
+  buyerId     String
+  buyer       User     @relation(fields: [buyerId], references: [id])
+  title       String
+  description String
+  category    String
+  budget      Float
+  deliveryTime Int     // in days
+  status      String   @default("OPEN")   // OPEN | CLOSED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

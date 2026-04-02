@@ -90,20 +90,20 @@ export default function GigDetail() {
         <div className="lg:col-span-2 space-y-6">
           {/* Title */}
           <div>
-            <span className="text-xs font-medium text-mint bg-mint/10 px-3 py-1 rounded-full">{gig.category}</span>
-            <h1 className="font-display font-bold text-2xl lg:text-3xl text-gray-900 mt-3 leading-tight">{gig.title}</h1>
-            <div className="flex items-center gap-3 mt-3">
+            <span className="text-xs font-medium text-mint bg-mint/10 dark:bg-mint/20 px-3 py-1 rounded-full">{gig.category}</span>
+            <h1 className="font-display font-extrabold text-3xl lg:text-5xl text-gray-900 dark:text-white mt-3 leading-[1.1] tracking-tighter">{gig.title}</h1>
+            <div className="flex items-center gap-3 mt-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white font-bold text-sm">
                   {gig.user?.name?.[0]?.toUpperCase()}
                 </div>
-                <span className="text-sm font-medium text-gray-700">{gig.user?.name}</span>
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{gig.user?.name}</span>
               </div>
               {avgRating && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-1 rounded-lg">
                   <Star size={14} fill="#f59e0b" className="text-amber-400" />
-                  <span className="text-sm font-semibold text-gray-700">{avgRating}</span>
-                  <span className="text-sm text-gray-400">({reviews.length})</span>
+                  <span className="text-sm font-extrabold text-amber-600 dark:text-amber-400">{avgRating}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest ml-1">({reviews.length} reviews)</span>
                 </div>
               )}
             </div>
@@ -121,28 +121,28 @@ export default function GigDetail() {
           </div>
 
           {/* Description */}
-          <div className="glass-card p-6">
-            <h2 className="font-display font-semibold text-lg text-gray-900 mb-3">About this gig</h2>
-            <p className="text-gray-600 leading-relaxed whitespace-pre-line">{gig.description}</p>
+          <div className="liquid-glass p-8 rounded-[2rem]">
+            <h2 className="font-display font-extrabold text-xl text-gray-900 dark:text-white mb-4">About this gig</h2>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line text-lg">{gig.description}</p>
             {gig.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap gap-2 mt-8">
                 {gig.tags.map(t => (
-                  <span key={t} className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">#{t}</span>
+                  <span key={t} className="text-[10px] font-bold uppercase tracking-widest bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 px-4 py-2 rounded-xl">#{t}</span>
                 ))}
               </div>
             )}
           </div>
 
           {/* Seller */}
-          <div className="glass-card p-6">
-            <h2 className="font-display font-semibold text-lg text-gray-900 mb-4">About the seller</h2>
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+          <div className="liquid-glass p-8 rounded-[2rem]">
+            <h2 className="font-display font-extrabold text-xl text-gray-900 dark:text-white mb-6">About the seller</h2>
+            <div className="flex items-start gap-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 shadow-lg shadow-mint/20">
                 {gig.user?.name?.[0]?.toUpperCase()}
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{gig.user?.name}</p>
-                <p className="text-sm text-gray-500 mt-1">{gig.user?.bio || 'Passionate student freelancer.'}</p>
+                <p className="text-xl font-display font-extrabold text-gray-900 dark:text-white">{gig.user?.name}</p>
+                <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium leading-relaxed">{gig.user?.bio || 'Passionate student freelancer.'}</p>
                 {gig.user?.skills?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {gig.user.skills.map(s => (
@@ -198,17 +198,17 @@ export default function GigDetail() {
             </div>
 
             {selectedPkg && (
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-3">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="font-display font-bold text-2xl text-gray-900">₹{selectedPkg.price}</p>
-                    <p className="text-sm font-medium text-gray-700 mt-0.5">{selectedPkg.name}</p>
+                    <p className="font-display font-extrabold text-4xl text-gray-900 dark:text-white tracking-tighter">₹{selectedPkg.price}</p>
+                    <p className="text-sm font-bold text-mint uppercase tracking-widest mt-2">{selectedPkg.name}</p>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full">
-                    <Clock size={12} /> {selectedPkg.deliveryTime} day{selectedPkg.deliveryTime !== 1 ? 's' : ''}
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 px-3 py-1.5 rounded-xl border border-gray-100 dark:border-white/5">
+                    <Clock size={14} className="text-mint" /> {selectedPkg.deliveryTime}d
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-5 leading-relaxed">{selectedPkg.description}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed font-medium">{selectedPkg.description}</p>
 
                 {orderError && (
                   <p className="text-sm text-red-500 mb-3">{orderError}</p>

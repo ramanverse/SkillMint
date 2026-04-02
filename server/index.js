@@ -11,6 +11,7 @@ import authRouter from './routes/auth.js';
 import gigsRouter from './routes/gigs.js';
 import ordersRouter from './routes/orders.js';
 import messagesRouter from './routes/messages.js';
+import requestsRouter from './routes/requests.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -37,6 +38,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/gigs', gigsRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/messages', messagesRouter);
+app.use('/api/requests', requestsRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 

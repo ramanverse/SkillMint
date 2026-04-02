@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Eye, EyeOff, Zap, ArrowRight, Briefcase, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Signup() {
-  const { signup } = useAuth();
+  const { signup, googleLogin } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'BUYER' });
   const [showPw, setShowPw] = useState(false);
@@ -29,11 +30,24 @@ export default function Signup() {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(credentialResponse.credential);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Google signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
       {/* Left Panel */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-mint-dark via-mint to-[#00E59D] p-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-25">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="absolute rounded-full border border-white"
               style={{ width: `${(i + 1) * 150}px`, height: `${(i + 1) * 150}px`, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
@@ -73,6 +87,26 @@ export default function Signup() {
 
           <h1 className="font-display font-extrabold text-4xl text-gray-900 mb-2 tracking-tight">Get started</h1>
           <p className="text-gray-500 mb-8 font-medium">Create your SkillMint profile in seconds.</p>
+
+          <div className="flex justify-center mb-8">
+            <GoogleLogin
+               onSuccess={handleGoogleSuccess}
+               onError={() => setError('Google Signup Failed')}
+               useOneTap
+               theme="outline"
+               shape="pill"
+               width="384"
+            />
+          </div>
+
+          <div className="relative mb-10">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-100/80"></div>
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em] font-extrabold">
+              <span className="bg-white px-4 text-gray-400/80">Or use your email</span>
+            </div>
+          </div>
 
           {/* Role Toggle */}
           <div className="flex gap-4 mb-8">

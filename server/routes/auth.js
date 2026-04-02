@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../index.js';
 import { serializeUser, stringifyArray } from '../utils/serializers.js';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const router = Router();
 
@@ -61,19 +64,48 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET /api/auth/me
-router.get('/me', async (req, res) => {
+// POST /api/auth/google
+router.post('/google', async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'No token' });
+    const { credential } = req.body;
+    if (!credential) return res.status(400).json({ error: 'Credential token required' });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
-    if (!user) return res.status(401).json({ error: 'User not found' });
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
 
-    res.json({ user: serializeUser(safeUser(user)) });
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub: googleId } = payload;
+
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // Create new user if not exists
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: await bcrypt.hash(Math.random().toString(36), 12), // Random password
+          role: 'BUYER',
+          profileImage: picture,
+          skills: '[]'
+        }
+      });
+    } else if (!user.profileImage && picture) {
+      // Update profile image if missing
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { profileImage: picture }
+      });
+    }
+
+    const serialized = serializeUser(safeUser(user));
+    const token = signToken(user);
+    res.json({ user: serialized, token });
+  } catch (err) {
+    console.error('Google Auth Error:', err);
+    res.status(401).json({ error: 'Invalid Google token' });
   }
 });
 

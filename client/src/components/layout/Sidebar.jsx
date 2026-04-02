@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, Search, ShoppingBag, MessageSquare,
-  PlusCircle, Star, LogOut, Menu, X, Zap, ChevronDown, User
+  LayoutDashboard, Search, ShoppingBag,
+  PlusCircle, Star, LogOut, Menu, X, Zap, ChevronDown, User,
+  Globe, Settings, CreditCard, HelpCircle, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', roles: ['BUYER', 'SELLER'] },
-  { icon: Search, label: 'Marketplace', path: '/marketplace', roles: ['BUYER', 'SELLER'] },
-  { icon: ShoppingBag, label: 'Orders', path: '/orders', roles: ['BUYER', 'SELLER'] },
   { icon: MessageSquare, label: 'Messages', path: '/messages', roles: ['BUYER', 'SELLER'] },
+  { icon: Search, label: 'Marketplace', path: '/marketplace', roles: ['BUYER', 'SELLER'] },
+  { icon: PlusCircle, label: 'Post a Request', path: '/requests/post', roles: ['BUYER'] },
+  { icon: Zap, label: 'My Requests', path: '/requests/my', roles: ['BUYER'] },
+  { icon: Zap, label: 'Available Requests', path: '/requests/browse', roles: ['SELLER'] },
+  { icon: ShoppingBag, label: 'Orders', path: '/orders', roles: ['BUYER', 'SELLER'] },
   { icon: PlusCircle, label: 'Create Listing', path: '/seller/create', roles: ['SELLER'] },
   { icon: Star, label: 'My Listings', path: '/seller/listings', roles: ['SELLER'] },
 ];
@@ -20,138 +24,102 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = () => { logout(); navigate('/'); };
 
   const filtered = navItems.filter(item => item.roles.includes(user?.role || 'BUYER'));
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="px-6 py-6 border-b border-mint/5">
-        <Link to="/dashboard" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 bg-gradient-to-br from-mint to-mint-dark rounded-xl flex items-center justify-center shadow-lg shadow-mint/20 group-hover:scale-105 transition-transform duration-300">
-            <Zap size={18} className="text-white fill-current" />
-          </div>
-          <span className="font-display font-extrabold text-xl tracking-tight text-gray-900">Skill<span className="text-mint">Mint</span></span>
-        </Link>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-4 py-6 space-y-1.5">
-        {filtered.map(({ icon: Icon, label, path }) => {
-          const active = location.pathname === path;
-          return (
-            <Link
-              key={path}
-              to={path}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 group ${
-                active
-                  ? 'bg-mint text-white shadow-xl shadow-mint/25 translate-x-1'
-                  : 'text-gray-500 hover:bg-mint/5 hover:text-mint'
-              }`}
-            >
-              <Icon size={19} className={active ? 'text-white' : 'text-gray-400 group-hover:text-mint transition-colors'} />
-              {label}
-              {active && (
-                <motion.div
-                  layoutId="activeIndicator"
-                  className="ml-auto w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-                />
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Profile */}
-      <div className="px-3 py-4 border-t border-mint/10">
-        <button
-          onClick={() => setProfileOpen(!profileOpen)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
-        >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-            {user?.name?.[0]?.toUpperCase() || <User size={14} />}
-          </div>
-          <div className="flex-1 text-left min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-            <p className="text-xs text-mint font-medium">{user?.role === 'SELLER' ? 'Seller Studio' : 'Buyer'}</p>
-          </div>
-          <ChevronDown size={14} className={`text-gray-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
-        </button>
-        <AnimatePresence>
-          {profileOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
-            >
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-3 py-2 mt-1 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <LogOut size={15} />
-                Sign Out
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-
   return (
-    <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 fixed top-0 left-0 h-full bg-white/80 backdrop-blur-xl border-r border-mint/5 z-40">
-        <SidebarContent />
-      </aside>
-
-      {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md border-b border-gray-100 z-40 px-4 py-3.5 flex items-center justify-between">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gradient-to-br from-mint to-mint-dark rounded-lg flex items-center justify-center">
-            <Zap size={14} className="text-white" />
-          </div>
-          <span className="font-display font-bold text-lg text-gray-900">Skill<span className="text-mint">Mint</span></span>
-        </Link>
-        <button onClick={() => setMobileOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
-          <Menu size={20} />
-        </button>
-      </header>
-
-      {/* Mobile Drawer */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 bg-black/40 z-50 lg:hidden"
-            />
-            <motion.aside
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-0 left-0 h-full w-72 bg-white z-50 lg:hidden flex flex-col"
-            >
-              <div className="absolute top-4 right-4">
-                <button onClick={() => setMobileOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
-                  <X size={18} />
-                </button>
+    <aside className="hidden lg:flex flex-col w-64 fixed top-24 bottom-6 bg-white/40 dark:bg-obsidian-800/40 backdrop-blur-3xl border-r border-gray-100 dark:border-white/5 z-30 transition-all duration-300 ml-4 rounded-3xl shadow-xl overflow-hidden">
+      <div className="flex flex-col h-full py-8">
+        
+        {/* User Stats Card (Bento Style) */}
+        <div className="px-6 mb-8">
+           <div className="p-5 rounded-2xl bg-gradient-to-br from-mint/10 to-transparent border border-mint/10 dark:border-mint/5 group hover:border-mint/20 transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                 <div className="w-10 h-10 rounded-full bg-mint flex items-center justify-center text-white font-bold text-sm">
+                    {user?.name?.[0]?.toUpperCase()}
+                 </div>
+                 <div className="flex-1 min-w-0">
+                    <p className="text-sm font-display font-extrabold text-gray-900 dark:text-white truncate">{user?.name}</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-mint">{user?.role}</p>
+                 </div>
               </div>
-              <SidebarContent />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                 <div className="bg-white/50 dark:bg-white/5 p-2 rounded-lg text-center border border-white/50 dark:border-white/5">
+                    <div className="text-xs font-display font-extrabold text-gray-900 dark:text-white">Active</div>
+                    <div className="text-[10px] text-gray-500">2 Orders</div>
+                 </div>
+                 <div className="bg-white/50 dark:bg-white/5 p-2 rounded-lg text-center border border-white/50 dark:border-white/5">
+                    <div className="text-xs font-display font-extrabold text-gray-900 dark:text-white">Rating</div>
+                    <div className="text-[10px] text-gray-500">4.9/5</div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
+          <p className="px-4 text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 dark:text-gray-500 mb-4">Main Menu</p>
+          {filtered.map(({ icon: Icon, label, path }) => {
+            const active = location.pathname === path;
+            return (
+              <Link
+                key={path}
+                to={path}
+                className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-500 ease-[cubic-bezier(0.2,1,0.2,1)] group ${
+                  active
+                    ? 'bg-mint text-white shadow-[0_20px_40px_-12px_rgba(0,229,157,0.4)] translate-x-1'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-mint/5 hover:text-mint dark:hover:bg-mint/10'
+                }`}
+              >
+                <Icon size={20} className={active ? 'text-white' : 'text-gray-400 group-hover:text-mint transition-colors duration-500'} />
+                <span className="relative z-10">{label}</span>
+                {active && (
+                  <motion.div
+                    layoutId="active-nav"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="ml-auto w-1.5 h-6 bg-white/30 rounded-full"
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer Actions */}
+        <div className="px-4 pt-6 border-t border-gray-100 dark:border-white/5 space-y-2">
+           {[
+             { icon: CreditCard, label: 'Billing', path: '/billing' },
+             { icon: Settings, label: 'Settings', path: '/settings' },
+             { icon: HelpCircle, label: 'Support', path: '/support' },
+           ].map(item => {
+             const active = location.pathname === item.path;
+             return (
+               <Link
+                 key={item.label}
+                 to={item.path}
+                 className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                   active
+                     ? 'bg-mint/10 text-mint'
+                     : 'text-gray-500 dark:text-gray-400 hover:text-mint dark:hover:text-mint'
+                 }`}
+               >
+                 <item.icon size={18} />
+                 <span>{item.label}</span>
+               </Link>
+             );
+           })}
+           <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all mt-4"
+          >
+            <LogOut size={18} />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </aside>
   );
 }
