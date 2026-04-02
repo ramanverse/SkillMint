@@ -2,6 +2,9 @@
 
 The **Elite Student Freelance Marketplace** — a premium platform designed specifically for students to showcase their skills, build a professional brand, and connect with global opportunities.
 
+> **SkillMint: Connecting fresh student talent with global opportunities dynamically and securely.** 🚀
+
+
 ---
 
 ## 📌 Problem
