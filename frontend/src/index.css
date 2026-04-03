@@ -37,12 +37,15 @@
   html {
     scroll-behavior: smooth;
     height: 100%;
+    overflow-x: hidden;
   }
 
   body {
     @apply font-sans bg-[#F7FDF9] text-[#1A1A1A] transition-colors duration-300 min-h-full;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   .dark body {

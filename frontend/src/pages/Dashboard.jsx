@@ -49,7 +49,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, x: -20 }} 
           animate={{ opacity: 1, x: 0 }}
         >
-          <h1 className="font-display font-extrabold text-4xl lg:text-5xl text-gray-900 dark:text-white tracking-tighter leading-none">
+          <h1 className="font-display font-extrabold text-3xl sm:text-4xl lg:text-5xl text-gray-900 dark:text-white tracking-tighter leading-none">
             Welcome, {user?.name?.split(' ')[0]}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-4 text-lg font-medium">
@@ -170,17 +170,17 @@ export default function Dashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
                   >
-                    <Link to={`/orders/${order.id}`} className="bento-tile flex items-center gap-6 group hover:border-mint/20">
-                      <div className="w-14 h-14 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-all duration-500">
+                    <Link to={`/orders/${order.id}`} className="bento-tile flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 group hover:border-mint/20 p-6 sm:p-8">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-all duration-500">
                          <Zap size={24} className="text-mint" />
                       </div>
                       <div className="flex-1 min-w-0">
-                         <p className="text-lg font-display font-bold text-gray-900 dark:text-white truncate transition-colors group-hover:text-mint leading-tight">{order.gig?.title}</p>
-                         <p className="text-xs text-gray-400 font-medium flex items-center gap-1.5 mt-2">
+                         <p className="text-base sm:text-lg font-display font-bold text-gray-900 dark:text-white truncate transition-colors group-hover:text-mint leading-tight">{order.gig?.title}</p>
+                         <p className="text-[10px] sm:text-xs text-gray-400 font-medium flex items-center gap-1.5 mt-1.5 sm:mt-2">
                             <Clock size={12} /> Ordered {new Date(order.createdAt).toLocaleDateString()}
                          </p>
                       </div>
-                      <div className="text-right flex flex-col items-end gap-3">
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-white/5">
                          <div className="text-lg font-display font-extrabold text-gray-900 dark:text-white tracking-tighter">₹{order.package?.price}</div>
                          <div className={`text-[9px] uppercase tracking-[0.15em] font-extrabold px-3 py-1 rounded-full ${statusColors[order.status]}`}>
                             {order.status.replace('_', ' ')}

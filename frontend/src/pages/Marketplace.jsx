@@ -111,26 +111,28 @@ export default function Marketplace() {
             <Sparkles size={12} className="fill-current" />
             <span>Discover Elite Talent</span>
           </div>
-          <h1 className="text-4xl lg:text-6xl font-display font-extrabold text-gray-900 dark:text-white tracking-tighter mb-6">
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-display font-extrabold text-gray-900 dark:text-white tracking-tighter mb-4 lg:mb-6">
             The Student <span className="text-mint">Marketplace</span>
           </h1>
-          <p className="text-xl text-gray-500 dark:text-gray-400 font-medium max-w-2xl mb-12">
+          <p className="text-lg lg:text-xl text-gray-500 dark:text-gray-400 font-medium max-w-2xl mb-8 lg:mb-12">
             Browse through {total} services curated for quality and university expertise.
           </p>
 
           <form onSubmit={handleSearch} className="relative max-w-3xl group">
              <div className="absolute inset-0 bg-mint/20 blur-3xl opacity-0 group-focus-within:opacity-30 transition-opacity duration-700" />
-             <div className="relative flex items-center">
-                <Search size={22} className="absolute left-6 text-gray-400 group-focus-within:text-mint transition-colors" />
-                <input
-                  id="marketplace-search"
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="What expertise do you need today?"
-                  className="w-full bg-white dark:bg-obsidian-900/50 backdrop-blur-xl border-2 border-gray-100 dark:border-white/5 p-6 pl-16 pr-32 rounded-[2rem] text-lg font-bold placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:border-mint focus:ring-0 transition-all shadow-2xl shadow-black/5 dark:text-white"
-                />
-                <button type="submit" className="absolute right-4 px-6 py-3 bg-mint text-white font-bold rounded-2xl hover:bg-mint-dark transition-all">
+             <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-0">
+                <div className="relative flex-1">
+                   <Search size={20} className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-mint transition-colors" />
+                   <input
+                     id="marketplace-search"
+                     type="text"
+                     value={search}
+                     onChange={e => setSearch(e.target.value)}
+                     placeholder="What expertise do you need?"
+                     className="w-full bg-white dark:bg-obsidian-900/50 backdrop-blur-xl border-2 border-gray-100 dark:border-white/5 p-4 sm:p-6 pl-14 sm:pl-16 pr-6 sm:pr-32 rounded-2xl sm:rounded-[2rem] text-base sm:text-lg font-bold placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:border-mint focus:ring-0 transition-all shadow-2xl shadow-black/5 dark:text-white"
+                   />
+                </div>
+                <button type="submit" className="sm:absolute sm:right-4 h-full sm:h-auto px-8 py-4 sm:py-3 bg-mint text-white font-bold rounded-2xl hover:bg-mint-dark transition-all shadow-lg shadow-mint/20 flex-shrink-0">
                   Search
                 </button>
              </div>

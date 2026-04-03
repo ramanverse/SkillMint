@@ -28,7 +28,7 @@ export default function Landing() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 flex items-center justify-center overflow-hidden">
+      <section className="relative pt-24 pb-16 lg:pt-48 lg:pb-32 flex items-center justify-center overflow-hidden">
         {/* Background Glows */}
         <div className="bg-glow w-[500px] h-[500px] bg-mint/5 dark:bg-mint/10 -top-20 -left-20 blur-[100px]" />
         <div className="bg-glow w-[600px] h-[600px] bg-emerald-500/5 dark:bg-emerald-500/10 -bottom-20 -right-20 blur-[120px]" />
@@ -41,16 +41,16 @@ export default function Landing() {
             className="max-w-4xl mx-auto"
           >
 
-            <motion.h1 variants={itemVariants} className="text-6xl lg:text-8xl font-display font-extrabold text-gray-900 dark:text-white leading-[1.05] tracking-tight mb-8">
+            <motion.h1 variants={itemVariants} className="text-4xl sm:text-5xl lg:text-8xl font-display font-extrabold text-gray-900 dark:text-white leading-[1.1] lg:leading-[1.05] tracking-tight mb-6 lg:mb-8">
               Elevate your <span className="text-mint">academic</span> hustle.
             </motion.h1>
 
-            <motion.p variants={itemVariants} className="text-xl text-gray-600 dark:text-gray-400 font-medium leading-relaxed max-w-2xl mx-auto mb-12">
+            <motion.p variants={itemVariants} className="text-lg lg:text-xl text-gray-600 dark:text-gray-400 font-medium leading-relaxed max-w-2xl mx-auto mb-10 lg:mb-12">
               Transform your university skills into a professional brand. The premier marketplace built for modern student creators and ambitious businesses.
             </motion.p>
 
             <motion.div variants={itemVariants} className="flex items-center justify-center">
-              <Link to="/signup" className="btn-primary py-5 px-12 text-xl flex items-center gap-3 group shadow-2xl shadow-mint/20 hover:-translate-y-1 transition-all duration-300">
+              <Link to="/signup" className="btn-primary py-4 px-8 lg:py-5 lg:px-12 text-lg lg:text-xl flex items-center gap-3 group shadow-2xl shadow-mint/20 hover:-translate-y-1 transition-all duration-300">
                 <span>Start Your Journey</span>
                 <Rocket size={22} className="group-hover:-translate-y-1 transition-transform" />
               </Link>
@@ -63,9 +63,9 @@ export default function Landing() {
       {/* Bento Grid Features */}
       <section id="how-it-works" className="pt-24 lg:pt-32 pb-12 lg:pb-16 relative">
         <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <h2 className="text-4xl lg:text-5xl font-display font-extrabold text-gray-900 dark:text-white mb-6">Designed for the <span className="text-mint">Creative Elite</span></h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 font-medium">Everything you need to showcase, manage, and scale your freelance empire while studying.</p>
+          <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-20">
+            <h2 className="text-3xl lg:text-5xl font-display font-extrabold text-gray-900 dark:text-white mb-6">Designed for the <span className="text-mint">Creative Elite</span></h2>
+            <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-400 font-medium">Everything you need to showcase, manage, and scale your freelance empire while studying.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -175,17 +175,17 @@ export default function Landing() {
 
 
       {/* CTA Section */}
-      <section className="pb-32">
+      <section className="pb-24 lg:pb-32">
         <div className="container mx-auto px-6">
-          <div className="liquid-glass rounded-[3rem] p-12 lg:p-24 relative overflow-hidden text-center group">
+          <div className="liquid-glass rounded-[2rem] lg:rounded-[3rem] p-8 sm:p-12 lg:p-24 relative overflow-hidden text-center group">
              {/* Animated Background Gradients */}
              <div className="absolute inset-0 bg-gradient-to-br from-mint/10 via-transparent to-purple-500/5 dark:from-mint/5 dark:to-obsidian-950 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
              
              <div className="relative z-10 max-w-3xl mx-auto">
-               <h2 className="text-4xl lg:text-7xl font-display font-extrabold text-gray-900 dark:text-white mb-8 tracking-tighter leading-none">
+               <h2 className="text-3xl lg:text-7xl font-display font-extrabold text-gray-900 dark:text-white mb-6 lg:mb-8 tracking-tighter leading-tight lg:leading-none">
                  Ready to <span className="text-mint">Mint</span> your career?
                </h2>
-               <p className="text-xl text-gray-600 dark:text-gray-400 font-medium mb-12 max-w-xl mx-auto">
+               <p className="text-lg lg:text-xl text-gray-600 dark:text-gray-400 font-medium mb-10 lg:mb-12 max-w-xl mx-auto">
                  Join the world's most talented student community. It takes less than 60 seconds to set up your professional space.
                </p>
                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">

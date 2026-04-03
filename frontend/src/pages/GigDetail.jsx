@@ -91,7 +91,7 @@ export default function GigDetail() {
           {/* Title */}
           <div>
             <span className="text-xs font-medium text-mint bg-mint/10 dark:bg-mint/20 px-3 py-1 rounded-full">{gig.category}</span>
-            <h1 className="font-display font-extrabold text-3xl lg:text-5xl text-gray-900 dark:text-white mt-3 leading-[1.1] tracking-tighter">{gig.title}</h1>
+            <h1 className="font-display font-extrabold text-2xl sm:text-3xl lg:text-5xl text-gray-900 dark:text-white mt-3 leading-[1.15] lg:leading-[1.1] tracking-tighter">{gig.title}</h1>
             <div className="flex items-center gap-3 mt-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white font-bold text-sm">
@@ -121,9 +121,9 @@ export default function GigDetail() {
           </div>
 
           {/* Description */}
-          <div className="liquid-glass p-8 rounded-[2rem]">
-            <h2 className="font-display font-extrabold text-xl text-gray-900 dark:text-white mb-4">About this gig</h2>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line text-lg">{gig.description}</p>
+          <div className="liquid-glass p-6 sm:p-8 rounded-2xl sm:rounded-[2rem]">
+            <h2 className="font-display font-extrabold text-lg sm:text-xl text-gray-900 dark:text-white mb-4">About this gig</h2>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line text-base sm:text-lg">{gig.description}</p>
             {gig.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-8">
                 {gig.tags.map(t => (
@@ -134,10 +134,10 @@ export default function GigDetail() {
           </div>
 
           {/* Seller */}
-          <div className="liquid-glass p-8 rounded-[2rem]">
-            <h2 className="font-display font-extrabold text-xl text-gray-900 dark:text-white mb-6">About the seller</h2>
-            <div className="flex items-start gap-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 shadow-lg shadow-mint/20">
+          <div className="liquid-glass p-6 sm:p-8 rounded-2xl sm:rounded-[2rem]">
+            <h2 className="font-display font-extrabold text-lg sm:text-xl text-gray-900 dark:text-white mb-6">About the seller</h2>
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white font-bold text-xl sm:text-2xl flex-shrink-0 shadow-lg shadow-mint/20">
                 {gig.user?.name?.[0]?.toUpperCase()}
               </div>
               <div>
