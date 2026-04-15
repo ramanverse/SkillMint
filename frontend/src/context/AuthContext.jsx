@@ -11,7 +11,10 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import axios from 'axios';
 
 // Base URL configurations matching backend endpoints
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const API_URL = import.meta.env.VITE_API_URL;
+if (!API_URL) {
+  throw new Error('VITE_API_URL not defined. Set it in the deployment environment.');
+}
 const SOCKET_URL = API_URL.replace(/\/api$/, '');
 
 // Create an Axios instance with base URL pre-configured

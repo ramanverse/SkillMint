@@ -6,7 +6,10 @@ import App from './App.jsx'
 import { ThemeProvider } from './context/ThemeContext'
 
 // Warm up Render backend on app load to avoid cold-start delays
-const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const BACKEND = import.meta.env.VITE_API_URL;
+if (!BACKEND) {
+  throw new Error('VITE_API_URL not defined. Set it in the deployment environment.');
+}
 fetch(`${BACKEND}/health`).catch(() => {});
 
 
