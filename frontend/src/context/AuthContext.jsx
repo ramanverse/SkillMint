@@ -53,6 +53,13 @@ export const AuthProvider = ({ children }) => {
     setUser(data.user);
     return data.user;
   };
+  
+  const demoLogin = async (role) => {
+    const { data } = await API.post('/auth/demo', { role });
+    localStorage.setItem('sm_token', data.token);
+    setUser(data.user);
+    return data.user;
+  };
 
   const logout = () => {
     localStorage.removeItem('sm_token');

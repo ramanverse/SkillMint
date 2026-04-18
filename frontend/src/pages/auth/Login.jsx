@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight, User, Briefcase } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
-  const { login, googleLogin } = useAuth();
+  const { login, googleLogin, demoLogin } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPw, setShowPw] = useState(false);
@@ -37,6 +37,19 @@ export default function Login() {
       navigate('/dashboard');
     } catch (err) {
       setError('Google login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (role) => {
+    setError('');
+    setLoading(true);
+    try {
+      await demoLogin(role);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Demo login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -137,6 +150,31 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('BUYER')}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-mint/5 hover:border-mint/20 transition-all duration-300 group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                <User size={16} className="text-gray-600 group-hover:text-mint" />
+              </div>
+              <span className="text-xs font-bold text-gray-500 group-hover:text-mint">Demo Hirer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('SELLER')}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-mint/5 hover:border-mint/20 transition-all duration-300 group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Briefcase size={16} className="text-gray-600 group-hover:text-mint" />
+              </div>
+              <span className="text-xs font-bold text-gray-500 group-hover:text-mint">Demo Freelancer</span>
+            </button>
+          </div>
 
           <div className="relative my-10">
             <div className="absolute inset-0 flex items-center">

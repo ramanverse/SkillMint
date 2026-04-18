@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../index.js';
 import { serializeUser, stringifyArray } from '../utils/serializers.js';
+import { authenticate } from '../middleware/auth.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -106,6 +107,52 @@ router.post('/google', async (req, res) => {
   } catch (err) {
     console.error('Google Auth Error:', err);
     res.status(401).json({ error: 'Invalid Google token' });
+  }
+});
+
+// GET /api/auth/me
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const serialized = serializeUser(safeUser(req.user));
+    res.json({ user: serialized });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/auth/demo
+router.post('/demo', async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!['BUYER', 'SELLER'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    const email = role === 'BUYER' ? 'hirer.demo@skillmint.com' : 'freelancer.demo@skillmint.com';
+    const name = role === 'BUYER' ? 'Demo Hirer' : 'Demo Freelancer';
+
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      const hashed = await bcrypt.hash('demo1234', 12);
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashed,
+          role,
+          bio: role === 'BUYER' ? 'I am a demo hirer looking for talent.' : 'I am a demo freelancer offering premium services.',
+          skills: role === 'SELLER' ? JSON.stringify(['React', 'Node.js', 'Design']) : '[]',
+        },
+      });
+    }
+
+    const serialized = serializeUser(safeUser(user));
+    const token = signToken(user);
+    res.json({ user: serialized, token });
+  } catch (err) {
+    console.error('Demo login error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

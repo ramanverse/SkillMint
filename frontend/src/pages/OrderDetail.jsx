@@ -5,6 +5,8 @@ import { ArrowLeft, Send, Package, Clock, Star, CheckCircle, XCircle, AlertCircl
 import { io } from 'socket.io-client';
 import { useAuth, API, SOCKET_URL } from '../context/AuthContext';
 
+const MotionDiv = motion.div;
+
 const STATUS_CONFIG = {
   PENDING: { label: 'Pending', color: 'text-amber-600 bg-amber-50', icon: Clock },
   IN_PROGRESS: { label: 'In Progress', color: 'text-blue-600 bg-blue-50', icon: AlertCircle },
@@ -41,11 +43,14 @@ export default function OrderDetail() {
   // Socket.io
   useEffect(() => {
     if (!order) return;
-    const socket = io(SOCKET_URL, { transports: ['websocket'] });
+    const socket = io(SOCKET_URL, {
+      auth: { token: localStorage.getItem('sm_token') },
+      transports: ['websocket', 'polling'],
+    });
     socketRef.current = socket;
 
     socket.emit('join_room', id);
-    socket.emit('user_online', user?.id);
+    socket.emit('user_online');
 
     socket.on('new_message', (msg) => {
       setMessages(prev => {
@@ -70,7 +75,6 @@ export default function OrderDetail() {
     try {
       socketRef.current?.emit('send_message', {
         orderId: id,
-        senderId: user.id,
         message: text,
       });
     } catch { setInput(text); }
@@ -100,7 +104,6 @@ export default function OrderDetail() {
 
   const isSeller = user?.id === order.sellerId;
   const isBuyer = user?.id === order.buyerId;
-  const other = isSeller ? order.buyer : order.seller;
   const cfg = STATUS_CONFIG[order.status];
   const StatusIcon = cfg.icon;
 
@@ -169,7 +172,7 @@ export default function OrderDetail() {
               messages.map((msg) => {
                 const isMe = msg.senderId === user?.id;
                 return (
-                  <motion.div
+                  <MotionDiv
                     key={msg.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -186,7 +189,7 @@ export default function OrderDetail() {
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
-                  </motion.div>
+                  </MotionDiv>
                 );
               })
             )}
@@ -219,7 +222,7 @@ export default function OrderDetail() {
       {/* Review Modal */}
       {showReview && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
@@ -242,7 +245,7 @@ export default function OrderDetail() {
               <button onClick={() => setShowReview(false)} className="btn-secondary flex-1">Cancel</button>
               <button onClick={submitReview} className="btn-primary flex-1">Submit Review</button>
             </div>
-          </motion.div>
+          </MotionDiv>
         </div>
       )}
     </div>

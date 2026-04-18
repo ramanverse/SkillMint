@@ -52,7 +52,7 @@ router.get('/:orderId', authenticate, async (req, res) => {
 
 // POST /api/messages/:orderId - send a message (Fallback for non-socket)
 router.post('/:orderId', authenticate, async (req, res) => {
-  const { message } = req.body;
+  const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
   if (!message) return res.status(400).json({ error: 'Message is required' });
 
   try {
@@ -60,13 +60,22 @@ router.post('/:orderId', authenticate, async (req, res) => {
     if (!order) return res.status(404).json({ error: 'Order not found' });
     if (order.buyerId !== req.user.id && order.sellerId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
 
-    const saved = await prisma.message.create({
-      data: {
-        orderId: req.params.orderId,
-        senderId: req.user.id,
-        message
-      },
-      include: { sender: { select: { id: true, name: true, profileImage: true } } }
+    const saved = await prisma.$transaction(async (tx) => {
+      const created = await tx.message.create({
+        data: {
+          orderId: req.params.orderId,
+          senderId: req.user.id,
+          message
+        },
+        include: { sender: { select: { id: true, name: true, profileImage: true } } }
+      });
+
+      await tx.order.update({
+        where: { id: req.params.orderId },
+        data: { updatedAt: new Date() },
+      });
+
+      return created;
     });
 
     res.status(201).json(saved);

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -46,28 +47,95 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok', timestamp: new Da
 // Socket.io chat
 const onlineUsers = new Map();
 
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error('Authentication required'));
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: { id: true, name: true, profileImage: true },
+    });
+
+    if (!user) return next(new Error('User not found'));
+    socket.data.user = user;
+    next();
+  } catch {
+    next(new Error('Invalid or expired token'));
+  }
+});
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('join_room', (roomId) => {
-    socket.join(roomId);
+  socket.on('join_room', async (roomId) => {
+    try {
+      const order = await prisma.order.findUnique({
+        where: { id: roomId },
+        select: { buyerId: true, sellerId: true },
+      });
+
+      if (!order) return;
+      if (order.buyerId !== socket.data.user.id && order.sellerId !== socket.data.user.id) return;
+
+      socket.join(roomId);
+    } catch (err) {
+      console.error('Join room error:', err);
+    }
   });
 
-  socket.on('user_online', (userId) => {
-    onlineUsers.set(userId, socket.id);
+  socket.on('user_online', () => {
+    onlineUsers.set(socket.data.user.id, socket.id);
     io.emit('online_users', Array.from(onlineUsers.keys()));
   });
 
-  socket.on('send_message', async (data) => {
-    const { orderId, senderId, message } = data;
+  socket.on('send_message', async (data, callback) => {
+    const { orderId, message } = data;
+    const text = typeof message === 'string' ? message.trim() : '';
+    if (!orderId || !text) {
+      if (typeof callback === 'function') callback({ ok: false, error: 'Message is required' });
+      return;
+    }
+
     try {
-      const saved = await prisma.message.create({
-        data: { orderId, senderId, message },
-        include: { sender: { select: { id: true, name: true, profileImage: true } } },
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, buyerId: true, sellerId: true },
       });
+
+      if (!order) {
+        if (typeof callback === 'function') callback({ ok: false, error: 'Order not found' });
+        return;
+      }
+      if (order.buyerId !== socket.data.user.id && order.sellerId !== socket.data.user.id) {
+        if (typeof callback === 'function') callback({ ok: false, error: 'Forbidden' });
+        return;
+      }
+
+      const saved = await prisma.$transaction(async (tx) => {
+        const created = await tx.message.create({
+          data: {
+            orderId,
+            senderId: socket.data.user.id,
+            message: text,
+          },
+          include: { sender: { select: { id: true, name: true, profileImage: true } } },
+        });
+
+        await tx.order.update({
+          where: { id: orderId },
+          data: { updatedAt: new Date() },
+        });
+
+        return created;
+      });
+
       io.to(orderId).emit('new_message', saved);
+      if (typeof callback === 'function') callback({ ok: true, message: saved });
     } catch (err) {
       console.error('Message save error:', err);
+      if (typeof callback === 'function') callback({ ok: false, error: 'Message could not be sent' });
     }
   });
 
