@@ -4,6 +4,7 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const SOCKET_URL = API_URL.replace(/\/api$/, '');
 const API = axios.create({ baseURL: API_URL });
+console.log('SkillMint API_URL:', API_URL);
 
 // Attach token to every request
 API.interceptors.request.use((config) => {

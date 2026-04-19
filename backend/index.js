@@ -30,7 +30,8 @@ const io = new Server(httpServer, {
 });
 
 // Middleware
-const allowedOrigins = process.env.CLIENT_URL ? [process.env.CLIENT_URL, 'http://localhost:5173'] : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+const localOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+const allowedOrigins = process.env.CLIENT_URL ? [process.env.CLIENT_URL, ...localOrigins] : localOrigins;
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));

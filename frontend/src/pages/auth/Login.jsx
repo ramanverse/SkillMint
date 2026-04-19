@@ -49,7 +49,13 @@ export default function Login() {
       await demoLogin(role);
       navigate('/dashboard');
     } catch (err) {
-      setError('Demo login failed. Please try again.');
+      console.error('Demo Login Error Full Details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        config: err.config
+      });
+      setError(err.response?.data?.error || 'Demo login failed. Please try again.');
     } finally {
       setLoading(false);
     }
