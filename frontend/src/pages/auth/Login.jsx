@@ -43,6 +43,9 @@ export default function Login() {
   };
 
   const handleDemoLogin = async (role) => {
+    const email = role === 'BUYER' ? 'hirer.demo@skillmint.com' : 'freelancer.demo@skillmint.com';
+    const password = 'demo1234';
+    setForm({ email, password });
     setError('');
     setLoading(true);
     try {
