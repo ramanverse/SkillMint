@@ -6,9 +6,9 @@ const SOCKET_URL = API_URL.replace(/\/api$/, '');
 const API = axios.create({ baseURL: API_URL });
 console.log('SkillMint API_URL:', API_URL);
 
-// Attach token to every request
+// Attach token to every request (check both storages — session for demo, local for real users)
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('sm_token');
+  const token = sessionStorage.getItem('sm_demo_token') || localStorage.getItem('sm_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -21,12 +21,13 @@ export const AuthProvider = ({ children }) => {
 
   const fetchMe = useCallback(async () => {
     try {
-      const token = localStorage.getItem('sm_token');
+      const token = sessionStorage.getItem('sm_demo_token') || localStorage.getItem('sm_token');
       if (!token) { setLoading(false); return; }
       const { data } = await API.get('/auth/me');
       setUser(data.user);
     } catch {
       localStorage.removeItem('sm_token');
+      sessionStorage.removeItem('sm_demo_token');
     } finally {
       setLoading(false);
     }
@@ -57,13 +58,16 @@ export const AuthProvider = ({ children }) => {
   
   const demoLogin = async (role) => {
     const { data } = await API.post('/auth/demo', { role });
-    localStorage.setItem('sm_token', data.token);
+    // Use sessionStorage for demo — clears when browser/tab is closed
+    sessionStorage.setItem('sm_demo_token', data.token);
+    localStorage.removeItem('sm_token'); // clear any real session
     setUser(data.user);
     return data.user;
   };
 
   const logout = () => {
     localStorage.removeItem('sm_token');
+    sessionStorage.removeItem('sm_demo_token');
     setUser(null);
   };
 
