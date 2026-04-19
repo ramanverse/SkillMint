@@ -2,12 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Briefcase, Clock, CreditCard, Tag, Search, Filter, MessageSquare, Plus, CheckCircle, Info } from 'lucide-react';
 import { API } from '../../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function BrowseRequests() {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+  const [contactingId, setContactingId] = useState(null);
+
+  const handleContactClient = async (buyerId) => {
+    setContactingId(buyerId);
+    try {
+      await API.post('/conversations', { targetUserId: buyerId });
+      navigate('/messages');
+    } catch (err) {
+      console.error('Contact client error:', err);
+      navigate('/messages');
+    } finally {
+      setContactingId(null);
+    }
+  };
 
   useEffect(() => {
     API.get('/requests')
@@ -115,12 +130,16 @@ export default function BrowseRequests() {
                       </div>
                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{req.buyer?.name}</span>
                    </div>
-                   <Link 
-                     to={`/messages?userId=${req.buyerId}`}
-                     className="btn-secondary py-2 px-4 text-[10px] font-bold tracking-widest uppercase flex items-center gap-2"
-                   >
-                     <MessageSquare size={12} /> Contact Client
-                   </Link>
+                    <button
+                      onClick={() => handleContactClient(req.buyerId)}
+                      disabled={contactingId === req.buyerId}
+                      className="btn-secondary py-2 px-4 text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 disabled:opacity-60"
+                    >
+                      {contactingId === req.buyerId
+                        ? <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        : <MessageSquare size={12} />}
+                      Contact Client
+                    </button>
                 </div>
              </motion.div>
            ))}
