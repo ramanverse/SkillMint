@@ -14,8 +14,8 @@ export default function BrowseRequests() {
   const handleContactClient = async (buyerId) => {
     setContactingId(buyerId);
     try {
-      await API.post('/conversations', { targetUserId: buyerId });
-      navigate('/messages');
+      const { data } = await API.post('/conversations', { targetUserId: buyerId });
+      navigate(`/messages?conversationId=${data.id}`);
     } catch (err) {
       console.error('Contact client error:', err);
       navigate('/messages');

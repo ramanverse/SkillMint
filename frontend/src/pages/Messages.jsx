@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { AlertCircle, Clock, MessageSquare, MoreVertical, Paperclip, Search, Send, ShieldCheck, Smile, Zap } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { API, SOCKET_URL, useAuth } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 const MotionDiv = motion.div;
 
@@ -30,6 +31,7 @@ const sortByRecentActivity = (items) =>
 
 export default function Messages() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState('direct'); // 'direct' | 'orders'
 
   // Direct conversations state
@@ -63,13 +65,25 @@ export default function Messages() {
   const loadDirectConversations = useCallback(async () => {
     try {
       const res = await API.get('/conversations');
-      setDirectConvos(sortByRecentActivity(res.data));
+      const sorted = sortByRecentActivity(res.data);
+      setDirectConvos(sorted);
+
+      // Auto-open conversation if navigated from Contact Client / Message Seller
+      const targetId = searchParams.get('conversationId');
+      if (targetId) {
+        const target = sorted.find(c => c.id === targetId);
+        if (target) {
+          setTab('direct');
+          setActiveDirectChat(target);
+        }
+        setSearchParams({}); // Clean URL
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setDirectLoading(false);
     }
-  }, []);
+  }, [searchParams, setSearchParams]);
 
   const loadDirectMessages = useCallback(async (convId) => {
     try {

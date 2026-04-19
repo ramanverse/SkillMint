@@ -54,8 +54,8 @@ export default function GigDetail() {
     if (!user) { navigate('/login'); return; }
     setMessaging(true);
     try {
-      await API.post('/conversations', { targetUserId: gig.userId });
-      navigate('/messages');
+      const { data } = await API.post('/conversations', { targetUserId: gig.userId });
+      navigate(`/messages?conversationId=${data.id}`);
     } catch (err) {
       console.error('Message seller error:', err);
       navigate('/messages');
