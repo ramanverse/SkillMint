@@ -13,6 +13,7 @@ import gigsRouter from './routes/gigs.js';
 import ordersRouter from './routes/orders.js';
 import messagesRouter from './routes/messages.js';
 import requestsRouter from './routes/requests.js';
+import conversationsRouter from './routes/conversations.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -42,6 +43,7 @@ app.use('/api/gigs', gigsRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/requests', requestsRouter);
+app.use('/api/conversations', conversationsRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
@@ -136,6 +138,43 @@ io.on('connection', (socket) => {
       if (typeof callback === 'function') callback({ ok: true, message: saved });
     } catch (err) {
       console.error('Message save error:', err);
+      if (typeof callback === 'function') callback({ ok: false, error: 'Message could not be sent' });
+    }
+  });
+
+  // Direct message room for conversations
+  socket.on('join_direct_room', (conversationId) => {
+    socket.join(`direct_${conversationId}`);
+  });
+
+  socket.on('send_direct_message', async (data, callback) => {
+    const { conversationId, message } = data;
+    const text = typeof message === 'string' ? message.trim() : '';
+    if (!conversationId || !text) {
+      if (typeof callback === 'function') callback({ ok: false, error: 'Message is required' });
+      return;
+    }
+    try {
+      const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+      if (!conversation) {
+        if (typeof callback === 'function') callback({ ok: false, error: 'Conversation not found' });
+        return;
+      }
+      if (conversation.buyerId !== socket.data.user.id && conversation.sellerId !== socket.data.user.id) {
+        if (typeof callback === 'function') callback({ ok: false, error: 'Forbidden' });
+        return;
+      }
+      const [saved] = await prisma.$transaction([
+        prisma.directMessage.create({
+          data: { conversationId, senderId: socket.data.user.id, message: text },
+          include: { sender: { select: { id: true, name: true, profileImage: true } } },
+        }),
+        prisma.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
+      ]);
+      io.to(`direct_${conversationId}`).emit('new_direct_message', saved);
+      if (typeof callback === 'function') callback({ ok: true, message: saved });
+    } catch (err) {
+      console.error('Direct message error:', err);
       if (typeof callback === 'function') callback({ ok: false, error: 'Message could not be sent' });
     }
   });

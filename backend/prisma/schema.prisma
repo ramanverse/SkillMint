@@ -18,11 +18,14 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  gigs           Gig[]
-  ordersAsBuyer  Order[]   @relation("BuyerOrders")
-  ordersAsSeller Order[]   @relation("SellerOrders")
-  messages       Message[]
-  requests       GigRequest[]
+  gigs                    Gig[]
+  ordersAsBuyer           Order[]        @relation("BuyerOrders")
+  ordersAsSeller          Order[]        @relation("SellerOrders")
+  messages                Message[]
+  requests                GigRequest[]
+  conversationsAsBuyer    Conversation[] @relation("BuyerConversations")
+  conversationsAsSeller   Conversation[] @relation("SellerConversations")
+  directMessages          DirectMessage[]
 }
 
 model Gig {
@@ -105,4 +108,28 @@ model GigRequest {
   status      String   @default("OPEN")   // OPEN | CLOSED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  buyerId   String
+  buyer     User      @relation("BuyerConversations", fields: [buyerId], references: [id])
+  sellerId  String
+  seller    User      @relation("SellerConversations", fields: [sellerId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  directMessages DirectMessage[]
+
+  @@unique([buyerId, sellerId])
+}
+
+model DirectMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  message        String
+  createdAt      DateTime     @default(now())
 }

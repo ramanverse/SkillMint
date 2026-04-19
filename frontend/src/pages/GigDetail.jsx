@@ -23,6 +23,8 @@ export default function GigDetail() {
   const [ordering, setOrdering] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [showSuccess, setShowSuccess] = useState(searchParams.get('created') === 'true');
+  const [messaging, setMessaging] = useState(false);
+
 
   useEffect(() => {
     API.get(`/gigs/${id}`)
@@ -47,6 +49,21 @@ export default function GigDetail() {
       setOrdering(false);
     }
   };
+
+  const handleMessageSeller = async () => {
+    if (!user) { navigate('/login'); return; }
+    setMessaging(true);
+    try {
+      await API.post('/conversations', { targetUserId: gig.userId });
+      navigate('/messages');
+    } catch (err) {
+      console.error('Message seller error:', err);
+      navigate('/messages');
+    } finally {
+      setMessaging(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -217,18 +234,32 @@ export default function GigDetail() {
                 {user?.id === gig.userId ? (
                   <div className="text-center text-sm text-gray-500 py-2">This is your listing</div>
                 ) : (
-                  <button
-                    id="order-now-btn"
-                    onClick={handleOrder}
-                    disabled={ordering}
-                    className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-60"
-                  >
-                    {ordering
-                      ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      : <><ShoppingCart size={18} /> Order Now</>
-                    }
-                  </button>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      id="order-now-btn"
+                      onClick={handleOrder}
+                      disabled={ordering}
+                      className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-60"
+                    >
+                      {ordering
+                        ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        : <><ShoppingCart size={18} /> Order Now</>
+                      }
+                    </button>
+                    <button
+                      id="message-seller-btn"
+                      onClick={handleMessageSeller}
+                      disabled={messaging}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-bold rounded-2xl border-2 border-mint text-mint hover:bg-mint hover:text-white transition-all duration-200 disabled:opacity-60"
+                    >
+                      {messaging
+                        ? <div className="w-5 h-5 border-2 border-mint/40 border-t-mint rounded-full animate-spin" />
+                        : <><MessageSquare size={18} /> Message Seller</>
+                      }
+                    </button>
+                  </div>
                 )}
+
               </div>
             )}
           </div>

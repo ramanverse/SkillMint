@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle, Clock, MoreVertical, Paperclip, Search, Send, ShieldCheck, Smile, Zap } from 'lucide-react';
+import { AlertCircle, Clock, MessageSquare, MoreVertical, Paperclip, Search, Send, ShieldCheck, Smile, Zap } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { API, SOCKET_URL, useAuth } from '../context/AuthContext';
 
@@ -11,6 +11,11 @@ const getOtherUser = (conversation, currentUser) => {
   return currentUser.role === 'SELLER' ? conversation.buyer : conversation.seller;
 };
 
+const getOtherUserDirect = (conversation, currentUser) => {
+  if (!conversation || !currentUser) return null;
+  return currentUser.id === conversation.buyerId ? conversation.seller : conversation.buyer;
+};
+
 const formatMessageTime = (date) => {
   if (!date) return '';
   return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -18,63 +23,96 @@ const formatMessageTime = (date) => {
 
 const sortByRecentActivity = (items) =>
   [...items].sort((a, b) => {
-    const aTime = new Date(a.messages?.[0]?.createdAt || a.updatedAt || a.createdAt).getTime();
-    const bTime = new Date(b.messages?.[0]?.createdAt || b.updatedAt || b.createdAt).getTime();
+    const aTime = new Date(a.directMessages?.[0]?.createdAt || a.messages?.[0]?.createdAt || a.updatedAt || a.createdAt).getTime();
+    const bTime = new Date(b.directMessages?.[0]?.createdAt || b.messages?.[0]?.createdAt || b.updatedAt || b.createdAt).getTime();
     return bTime - aTime;
   });
 
 export default function Messages() {
   const { user } = useAuth();
+  const [tab, setTab] = useState('direct'); // 'direct' | 'orders'
+
+  // Direct conversations state
+  const [directConvos, setDirectConvos] = useState([]);
+  const [activeDirectChat, setActiveDirectChat] = useState(null);
+  const [directMessages, setDirectMessages] = useState([]);
+  const [directLoading, setDirectLoading] = useState(true);
+  const [directMsgsLoading, setDirectMsgsLoading] = useState(false);
+
+  // Order conversations (existing)
   const [conversations, setConversations] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
+
+  const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [error, setError] = useState('');
   const scrollRef = useRef();
   const socketRef = useRef(null);
+  const activeDirectChatRef = useRef(null);
   const activeChatRef = useRef(null);
+
+  // Keep refs in sync
+  useEffect(() => { activeDirectChatRef.current = activeDirectChat; }, [activeDirectChat]);
+  useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
+
+  const loadDirectConversations = useCallback(async () => {
+    try {
+      const res = await API.get('/conversations');
+      setDirectConvos(sortByRecentActivity(res.data));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDirectLoading(false);
+    }
+  }, []);
+
+  const loadDirectMessages = useCallback(async (convId) => {
+    try {
+      setDirectMsgsLoading(true);
+      const res = await API.get(`/conversations/${convId}`);
+      setDirectMessages(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDirectMsgsLoading(false);
+    }
+  }, []);
 
   const loadConversations = useCallback(async () => {
     try {
-      setError('');
       const res = await API.get('/messages');
       const sorted = sortByRecentActivity(res.data);
       setConversations(sorted);
-      setActiveChat((current) => current || sorted[0] || null);
+      setActiveChat((cur) => cur || sorted[0] || null);
     } catch (e) {
       console.error(e);
-      setError('Unable to load conversations right now.');
+      setError('Unable to load order conversations.');
     } finally {
-      setLoading(false);
+      setOrdersLoading(false);
     }
   }, []);
 
   const loadMessages = useCallback(async (orderId) => {
     try {
       setMessagesLoading(true);
-      setError('');
       const res = await API.get(`/messages/${orderId}`);
       setMessages(res.data);
     } catch (e) {
       console.error(e);
-      setError('Unable to load this chat right now.');
     } finally {
       setMessagesLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    activeChatRef.current = activeChat;
-  }, [activeChat]);
-
+  // Socket.io setup
   useEffect(() => {
     if (!user?.id) return;
-
+    loadDirectConversations();
     loadConversations();
 
     const socket = io(SOCKET_URL, {
@@ -82,42 +120,52 @@ export default function Messages() {
       withCredentials: true,
       transports: ['websocket', 'polling'],
     });
-
     socketRef.current = socket;
 
     socket.on('connect', () => {
       socket.emit('user_online');
       if (activeChatRef.current?.id) socket.emit('join_room', activeChatRef.current.id);
+      if (activeDirectChatRef.current?.id) socket.emit('join_direct_room', activeDirectChatRef.current.id);
     });
 
     socket.on('connect_error', () => {
-      setError('Realtime chat is reconnecting. Messages can still be sent once the connection returns.');
+      setError('Realtime chat is reconnecting...');
     });
 
-    socket.on('online_users', (ids) => {
-      setOnlineUsers(new Set(ids));
-    });
+    socket.on('online_users', (ids) => setOnlineUsers(new Set(ids)));
 
+    // Order messages
     socket.on('new_message', (msg) => {
       if (activeChatRef.current?.id === msg.orderId) {
-        setMessages((prev) => {
-          if (prev.some((item) => item.id === msg.id)) return prev;
-          return [...prev, msg];
-        });
+        setMessages((prev) => prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]);
       }
-
-      setConversations((prev) => sortByRecentActivity(prev.map((conversation) =>
-        conversation.id === msg.orderId
-          ? { ...conversation, updatedAt: msg.createdAt, messages: [msg] }
-          : conversation
+      setConversations((prev) => sortByRecentActivity(prev.map((c) =>
+        c.id === msg.orderId ? { ...c, updatedAt: msg.createdAt, messages: [msg] } : c
       )));
     });
 
-    return () => {
-      socket.disconnect();
-      socketRef.current = null;
-    };
-  }, [loadConversations, user?.id]);
+    // Direct messages
+    socket.on('new_direct_message', (msg) => {
+      if (activeDirectChatRef.current?.id === msg.conversationId) {
+        setDirectMessages((prev) => prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]);
+      }
+      setDirectConvos((prev) => sortByRecentActivity(prev.map((c) =>
+        c.id === msg.conversationId ? { ...c, updatedAt: msg.createdAt, directMessages: [msg] } : c
+      )));
+    });
+
+    return () => { socket.disconnect(); socketRef.current = null; };
+  }, [loadConversations, loadDirectConversations, user?.id]);
+
+  // Load messages when active chat changes
+  useEffect(() => {
+    if (activeDirectChat) {
+      loadDirectMessages(activeDirectChat.id);
+      socketRef.current?.emit('join_direct_room', activeDirectChat.id);
+    } else {
+      setDirectMessages([]);
+    }
+  }, [activeDirectChat, loadDirectMessages]);
 
   useEffect(() => {
     if (activeChat) {
@@ -130,26 +178,37 @@ export default function Messages() {
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, directMessages]);
 
-  const filteredConversations = useMemo(() => {
+  // Filtered conversations for search
+  const filteredDirect = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return directConvos;
+    return directConvos.filter((c) => {
+      const other = getOtherUserDirect(c, user);
+      const lastMsg = c.directMessages?.[0]?.message || '';
+      return [other?.name, lastMsg].some((v) => v?.toLowerCase().includes(term));
+    });
+  }, [directConvos, searchTerm, user]);
+
+  const filteredOrders = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return conversations;
-
-    return conversations.filter((conversation) => {
-      const otherUser = getOtherUser(conversation, user);
-      const title = conversation.gig?.title || '';
-      const lastMessage = conversation.messages?.[0]?.message || '';
-      return [otherUser?.name, title, lastMessage].some((value) =>
-        value?.toLowerCase().includes(term)
-      );
+    return conversations.filter((c) => {
+      const other = getOtherUser(c, user);
+      return [other?.name, c.gig?.title, c.messages?.[0]?.message].some((v) => v?.toLowerCase().includes(term));
     });
   }, [conversations, searchTerm, user]);
 
+  // Send message handlers
   const handleSend = async (e) => {
     e.preventDefault();
     const text = newMessage.trim();
-    if (!text || !activeChat || sending) return;
+    if (!text || sending) return;
+
+    const isDirect = tab === 'direct';
+    const currentChat = isDirect ? activeDirectChat : activeChat;
+    if (!currentChat) return;
 
     setSending(true);
     setNewMessage('');
@@ -158,36 +217,37 @@ export default function Messages() {
     try {
       const socket = socketRef.current;
       if (!socket?.connected) {
-        const { data } = await API.post(`/messages/${activeChat.id}`, { message: text });
-        setMessages((prev) => {
-          if (prev.some((item) => item.id === data.id)) return prev;
-          return [...prev, data];
-        });
-        setConversations((prev) => sortByRecentActivity(prev.map((conversation) =>
-          conversation.id === data.orderId
-            ? { ...conversation, updatedAt: data.createdAt, messages: [data] }
-            : conversation
-        )));
+        // HTTP fallback
+        if (isDirect) {
+          const { data } = await API.post(`/conversations/${currentChat.id}/messages`, { message: text });
+          setDirectMessages((prev) => prev.some((m) => m.id === data.id) ? prev : [...prev, data]);
+        } else {
+          const { data } = await API.post(`/messages/${currentChat.id}`, { message: text });
+          setMessages((prev) => prev.some((m) => m.id === data.id) ? prev : [...prev, data]);
+        }
         return;
       }
 
-      await new Promise((resolve, reject) => {
-        socket.timeout(7000).emit('send_message', {
-          orderId: activeChat.id,
-          message: text,
-        }, (err, response) => {
-          if (err) return reject(new Error('Message timed out'));
-          if (!response?.ok) return reject(new Error(response?.error || 'Message could not be sent'));
-
-          setMessages((prev) => {
-            if (prev.some((item) => item.id === response.message.id)) return prev;
-            return [...prev, response.message];
+      if (isDirect) {
+        await new Promise((resolve, reject) => {
+          socket.timeout(7000).emit('send_direct_message', { conversationId: currentChat.id, message: text }, (err, res) => {
+            if (err) return reject(new Error('Message timed out'));
+            if (!res?.ok) return reject(new Error(res?.error || 'Failed to send'));
+            setDirectMessages((prev) => prev.some((m) => m.id === res.message.id) ? prev : [...prev, res.message]);
+            resolve();
           });
-          resolve();
         });
-      });
+      } else {
+        await new Promise((resolve, reject) => {
+          socket.timeout(7000).emit('send_message', { orderId: currentChat.id, message: text }, (err, res) => {
+            if (err) return reject(new Error('Message timed out'));
+            if (!res?.ok) return reject(new Error(res?.error || 'Failed to send'));
+            setMessages((prev) => prev.some((m) => m.id === res.message.id) ? prev : [...prev, res.message]);
+            resolve();
+          });
+        });
+      }
     } catch (err) {
-      console.error(err);
       setNewMessage(text);
       setError(err.message || 'Message could not be sent.');
     } finally {
@@ -195,7 +255,17 @@ export default function Messages() {
     }
   };
 
-  if (loading) return (
+  const currentMessages = tab === 'direct' ? directMessages : messages;
+  const currentLoading = tab === 'direct' ? directLoading : ordersLoading;
+  const currentMsgsLoading = tab === 'direct' ? directMsgsLoading : messagesLoading;
+  const currentActiveChat = tab === 'direct' ? activeDirectChat : activeChat;
+  const currentSetActive = tab === 'direct' ? setActiveDirectChat : setActiveChat;
+  const currentFiltered = tab === 'direct' ? filteredDirect : filteredOrders;
+
+  const getOtherFromChat = (chat) => tab === 'direct' ? getOtherUserDirect(chat, user) : getOtherUser(chat, user);
+  const getLastMsg = (chat) => tab === 'direct' ? chat.directMessages?.[0] : chat.messages?.[0];
+
+  if (currentLoading && tab === 'direct' && ordersLoading) return (
     <div className="h-[80vh] flex items-center justify-center">
       <div className="w-12 h-12 border-4 border-mint border-t-transparent rounded-full animate-spin" />
     </div>
@@ -203,9 +273,27 @@ export default function Messages() {
 
   return (
     <div className="h-[calc(100vh-140px)] flex gap-6 overflow-hidden">
+      {/* Left Panel */}
       <div className="w-80 lg:w-96 flex flex-col liquid-glass rounded-[2.5rem] border border-gray-100 dark:border-white/5 overflow-hidden">
         <div className="p-6 border-b border-gray-50 dark:border-white/5">
-          <h2 className="text-xl font-display font-extrabold text-gray-900 dark:text-white mb-6">Inbox</h2>
+          <h2 className="text-xl font-display font-extrabold text-gray-900 dark:text-white mb-4">Messages</h2>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-4 bg-gray-50 dark:bg-white/5 rounded-2xl p-1">
+            <button
+              onClick={() => { setTab('direct'); setSearchTerm(''); }}
+              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${tab === 'direct' ? 'bg-mint text-white shadow-md' : 'text-gray-500 hover:text-mint'}`}
+            >
+              Direct
+            </button>
+            <button
+              onClick={() => { setTab('orders'); setSearchTerm(''); }}
+              className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${tab === 'orders' ? 'bg-mint text-white shadow-md' : 'text-gray-500 hover:text-mint'}`}
+            >
+              Orders
+            </button>
+          </div>
+
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
@@ -219,46 +307,44 @@ export default function Messages() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {conversations.length === 0 ? (
+          {currentFiltered.length === 0 ? (
             <div className="p-10 text-center text-gray-400">
-              <ShieldCheck size={40} className="mx-auto mb-4 opacity-20" />
-              <p className="text-xs font-bold uppercase tracking-widest leading-loose">No active<br />conversations</p>
-            </div>
-          ) : filteredConversations.length === 0 ? (
-            <div className="p-10 text-center text-gray-400">
-              <Search size={36} className="mx-auto mb-4 opacity-20" />
-              <p className="text-xs font-bold uppercase tracking-widest leading-loose">No matching<br />chats</p>
+              <MessageSquare size={40} className="mx-auto mb-4 opacity-20" />
+              <p className="text-xs font-bold uppercase tracking-widest leading-loose">
+                {tab === 'direct' ? 'No direct messages yet' : 'No order conversations'}
+              </p>
+              {tab === 'direct' && (
+                <p className="text-xs text-gray-400 mt-2">Visit a gig page to message a seller</p>
+              )}
             </div>
           ) : (
-            filteredConversations.map((conversation) => {
-              const otherUser = getOtherUser(conversation, user);
-              const lastMsg = conversation.messages?.[0];
-              const isActive = activeChat?.id === conversation.id;
-              const isOnline = onlineUsers.has(otherUser?.id);
+            currentFiltered.map((chat) => {
+              const other = getOtherFromChat(chat);
+              const lastMsg = getLastMsg(chat);
+              const isActive = currentActiveChat?.id === chat.id;
+              const isOnline = onlineUsers.has(other?.id);
 
               return (
                 <button
-                  key={conversation.id}
-                  onClick={() => setActiveChat(conversation)}
+                  key={chat.id}
+                  onClick={() => currentSetActive(chat)}
                   className={`w-full flex items-center gap-4 p-4 rounded-3xl transition-all group ${
-                    isActive
-                      ? 'bg-mint text-white shadow-xl shadow-mint/20'
-                      : 'hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
+                    isActive ? 'bg-mint text-white shadow-xl shadow-mint/20' : 'hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
                   }`}
                 >
                   <div className="relative flex-shrink-0">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg ${isActive ? 'bg-white/20' : 'bg-mint/10 text-mint'}`}>
-                      {otherUser?.name?.[0]?.toUpperCase() || '?'}
+                      {other?.name?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-4 border-white dark:border-obsidian-900 ${isOnline ? 'bg-mint' : 'bg-gray-300 dark:bg-gray-600'}`} />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex justify-between items-baseline mb-1">
-                      <span className={`font-display font-bold truncate ${isActive ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{otherUser?.name || 'Unknown user'}</span>
-                      <span className="text-[10px] font-bold opacity-60">{formatMessageTime(lastMsg?.createdAt || conversation.updatedAt)}</span>
+                      <span className={`font-display font-bold truncate ${isActive ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{other?.name || 'Unknown'}</span>
+                      <span className="text-[10px] font-bold opacity-60">{formatMessageTime(lastMsg?.createdAt || chat.updatedAt)}</span>
                     </div>
                     <p className={`text-xs truncate ${isActive ? 'text-white/80' : 'text-gray-500'} font-medium`}>
-                      {lastMsg?.message || 'Started a new project'}
+                      {lastMsg?.message || (tab === 'direct' ? 'Start a conversation' : 'New project started')}
                     </p>
                   </div>
                 </button>
@@ -268,32 +354,30 @@ export default function Messages() {
         </div>
       </div>
 
+      {/* Right Panel - Chat */}
       <div className="flex-1 flex flex-col liquid-glass rounded-[2.5rem] border border-gray-100 dark:border-white/5 overflow-hidden">
-        {activeChat ? (
+        {currentActiveChat ? (
           <>
             <div className="p-6 border-b border-gray-50 dark:border-white/5 flex items-center justify-between bg-white/40 dark:bg-obsidian-950/40 backdrop-blur-xl">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-mint flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-mint/20">
-                  {getOtherUser(activeChat, user)?.name?.[0]?.toUpperCase() || '?'}
+                  {getOtherFromChat(currentActiveChat)?.name?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div>
                   <h3 className="font-display font-extrabold text-gray-900 dark:text-white leading-tight">
-                    {getOtherUser(activeChat, user)?.name || 'Unknown user'}
+                    {getOtherFromChat(currentActiveChat)?.name || 'Unknown'}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className={`w-1.5 h-1.5 rounded-full ${onlineUsers.has(getOtherUser(activeChat, user)?.id) ? 'bg-mint animate-pulse' : 'bg-gray-300'}`} />
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-mint">Project: {activeChat.gig?.title || 'Untitled project'}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full ${onlineUsers.has(getOtherFromChat(currentActiveChat)?.id) ? 'bg-mint animate-pulse' : 'bg-gray-300'}`} />
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-mint">
+                      {tab === 'direct' ? 'Direct Message' : `Project: ${currentActiveChat.gig?.title || 'Untitled'}`}
+                    </span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <button className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-mint transition-colors">
-                  <ShieldCheck size={20} />
-                </button>
-                <button className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-mint transition-colors">
-                  <MoreVertical size={20} />
-                </button>
-              </div>
+              <button className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-50 dark:bg-white/5 text-gray-400 hover:text-mint transition-colors">
+                <MoreVertical size={20} />
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 space-y-6">
@@ -304,17 +388,16 @@ export default function Messages() {
                     {error}
                   </div>
                 )}
-
-                {messagesLoading ? (
+                {currentMsgsLoading ? (
                   <div className="py-16 flex justify-center">
                     <div className="w-8 h-8 border-4 border-mint border-t-transparent rounded-full animate-spin" />
                   </div>
-                ) : messages.length === 0 ? (
+                ) : currentMessages.length === 0 ? (
                   <div className="py-16 text-center text-gray-400">
-                    <ShieldCheck size={36} className="mx-auto mb-4 opacity-30" />
-                    <p className="text-sm font-semibold">No messages yet. Start the conversation.</p>
+                    <MessageSquare size={36} className="mx-auto mb-4 opacity-30" />
+                    <p className="text-sm font-semibold">No messages yet. Start the conversation!</p>
                   </div>
-                ) : messages.map((msg) => {
+                ) : currentMessages.map((msg) => {
                   const isMe = msg.senderId === user.id;
                   return (
                     <MotionDiv
@@ -368,7 +451,7 @@ export default function Messages() {
               </form>
               <div className="mt-3 px-6 flex items-center gap-2">
                 <Zap size={12} className="text-mint animate-pulse" />
-                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]">Safe Payments • Verified Student Community</p>
+                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-[0.2em]">Real-time Messaging • Verified Student Community</p>
               </div>
             </div>
           </>
@@ -379,7 +462,9 @@ export default function Messages() {
             </div>
             <h3 className="text-2xl font-display font-extrabold text-gray-900 dark:text-white mb-3">Your Secure Workspace</h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-sm leading-relaxed mb-8">
-              Select a conversation from the left to start collaborating. All messages and transactions are monitored for safety.
+              {tab === 'direct'
+                ? 'Select a conversation or visit any gig page to message a seller directly.'
+                : 'Select an order-based conversation from the left to continue collaborating.'}
             </p>
           </div>
         )}
