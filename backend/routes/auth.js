@@ -134,7 +134,7 @@ router.post('/demo', async (req, res) => {
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      const hashed = await bcrypt.hash('demo1234', 12);
+      const hashed = await bcrypt.hash('demo1234', 6); // fewer rounds for demo speed
       user = await prisma.user.create({
         data: {
           name,

@@ -5,6 +5,11 @@ import './index.css'
 import App from './App.jsx'
 import { ThemeProvider } from './context/ThemeContext'
 
+// Warm up Render backend on app load to avoid cold-start delays
+const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+fetch(`${BACKEND}/health`).catch(() => {});
+
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <GoogleOAuthProvider clientId="325232363180-ahp1a4es4l21jbh903ss1rrh3iufdvjd.apps.googleusercontent.com">
