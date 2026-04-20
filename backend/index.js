@@ -71,6 +71,8 @@ io.use(async (socket, next) => {
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
+  // Join personal room for background notifications
+  socket.join(`user_${socket.data.user.id}`);
 
   socket.on('join_room', async (roomId) => {
     try {
@@ -123,7 +125,10 @@ io.on('connection', (socket) => {
             senderId: socket.data.user.id,
             message: text,
           },
-          include: { sender: { select: { id: true, name: true, profileImage: true } } },
+          include: { 
+            sender: { select: { id: true, name: true, profileImage: true } },
+            order: { select: { buyerId: true, sellerId: true } }
+          },
         });
 
         await tx.order.update({
@@ -134,7 +139,12 @@ io.on('connection', (socket) => {
         return created;
       });
 
+      // Emit to room for active chat window
       io.to(orderId).emit('new_message', saved);
+      
+      // Emit to participants for sidebar/background updates
+      io.to(`user_${saved.order.buyerId}`).to(`user_${saved.order.sellerId}`).emit('new_message', saved);
+
       if (typeof callback === 'function') callback({ ok: true, message: saved });
     } catch (err) {
       console.error('Message save error:', err);
@@ -178,11 +188,20 @@ io.on('connection', (socket) => {
       const [saved] = await prisma.$transaction([
         prisma.directMessage.create({
           data: { conversationId, senderId: socket.data.user.id, message: text },
-          include: { sender: { select: { id: true, name: true, profileImage: true } } },
+          include: { 
+            sender: { select: { id: true, name: true, profileImage: true } },
+            conversation: { select: { buyerId: true, sellerId: true } }
+          },
         }),
         prisma.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
       ]);
+
+      // Emit to room for active chat window
       io.to(`direct_${conversationId}`).emit('new_direct_message', saved);
+
+      // Emit to participants for sidebar/background updates
+      io.to(`user_${saved.conversation.buyerId}`).to(`user_${saved.conversation.sellerId}`).emit('new_direct_message', saved);
+
       if (typeof callback === 'function') callback({ ok: true, message: saved });
     } catch (err) {
       console.error('Direct message error:', err);
