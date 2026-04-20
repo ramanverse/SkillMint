@@ -76,14 +76,20 @@ export default function Messages() {
           setTab('direct');
           setActiveDirectChat(target);
         }
-        setSearchParams({}); // Clean URL
+        // Always clean URL, but maybe wait until it's processed
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('conversationId');
+        setSearchParams(newParams);
+      } else if (!activeDirectChat && sorted.length > 0 && tab === 'direct') {
+        // Default to first if on direct tab and nothing active
+        setActiveDirectChat(sorted[0]);
       }
     } catch (e) {
       console.error(e);
     } finally {
       setDirectLoading(false);
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, activeDirectChat, tab]);
 
   const loadDirectMessages = useCallback(async (convId) => {
     try {
@@ -328,7 +334,11 @@ export default function Messages() {
                 {tab === 'direct' ? 'No direct messages yet' : 'No order conversations'}
               </p>
               {tab === 'direct' && (
-                <p className="text-xs text-gray-400 mt-2">Visit a gig page to message a seller</p>
+                <p className="text-xs text-gray-400 mt-2">
+                  {user?.role === 'SELLER' 
+                    ? 'Check available requests to contact potential clients' 
+                    : 'Visit a freelancer profile to message them directly'}
+                </p>
               )}
             </div>
           ) : (
@@ -477,7 +487,9 @@ export default function Messages() {
             <h3 className="text-2xl font-display font-extrabold text-gray-900 dark:text-white mb-3">Your Secure Workspace</h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-sm leading-relaxed mb-8">
               {tab === 'direct'
-                ? 'Select a conversation or visit any gig page to message a seller directly.'
+                ? (user?.role === 'SELLER' 
+                    ? 'Select a client conversation or contact a client from Available Requests.' 
+                    : 'Select a conversation or visit any gig page to message a seller directly.')
                 : 'Select an order-based conversation from the left to continue collaborating.'}
             </p>
           </div>

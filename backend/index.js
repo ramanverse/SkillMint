@@ -143,8 +143,19 @@ io.on('connection', (socket) => {
   });
 
   // Direct message room for conversations
-  socket.on('join_direct_room', (conversationId) => {
-    socket.join(`direct_${conversationId}`);
+  socket.on('join_direct_room', async (conversationId) => {
+    try {
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        select: { buyerId: true, sellerId: true }
+      });
+      if (!conversation) return;
+      if (conversation.buyerId !== socket.data.user.id && conversation.sellerId !== socket.data.user.id) return;
+      
+      socket.join(`direct_${conversationId}`);
+    } catch (err) {
+      console.error('Join direct room error:', err);
+    }
   });
 
   socket.on('send_direct_message', async (data, callback) => {

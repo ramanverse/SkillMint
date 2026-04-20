@@ -34,7 +34,7 @@ router.get('/', authenticate, async (req, res) => {
 // POST /api/conversations — start or get a conversation with another user
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { targetUserId } = req.body;
+    const { targetUserId, message } = req.body;
     if (!targetUserId) return res.status(400).json({ error: 'targetUserId is required' });
     if (targetUserId === req.user.id) return res.status(400).json({ error: 'Cannot message yourself' });
 
@@ -47,11 +47,31 @@ router.post('/', authenticate, async (req, res) => {
     const sellerId = currentIsBuyer ? targetUserId : req.user.id;
 
     // Upsert — find existing or create new
-    const conversation = await prisma.conversation.upsert({
-      where: { buyerId_sellerId: { buyerId, sellerId } },
-      update: {},
-      create: { buyerId, sellerId },
-      include: includeParticipants,
+    const conversation = await prisma.$transaction(async (tx) => {
+      const conv = await tx.conversation.upsert({
+        where: { buyerId_sellerId: { buyerId, sellerId } },
+        update: {},
+        create: { buyerId, sellerId },
+        include: includeParticipants,
+      });
+
+      if (message && message.trim()) {
+        await tx.directMessage.create({
+          data: {
+            conversationId: conv.id,
+            senderId: req.user.id,
+            message: message.trim(),
+          }
+        });
+        // Update updatedAt to reflect new message
+        return await tx.conversation.update({
+          where: { id: conv.id },
+          data: { updatedAt: new Date() },
+          include: includeParticipants,
+        });
+      }
+
+      return conv;
     });
 
     res.json(conversation);

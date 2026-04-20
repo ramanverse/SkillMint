@@ -24,6 +24,8 @@ export default function GigDetail() {
   const [orderError, setOrderError] = useState('');
   const [showSuccess, setShowSuccess] = useState(searchParams.get('created') === 'true');
   const [messaging, setMessaging] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [initialMessage, setInitialMessage] = useState('');
 
 
   useEffect(() => {
@@ -50,17 +52,26 @@ export default function GigDetail() {
     }
   };
 
-  const handleMessageSeller = async () => {
+  const handleMessageSeller = () => {
     if (!user) { navigate('/login'); return; }
+    setInitialMessage(`Hi ${gig.user?.name}, I'm interested in your gig "${gig.title}". I'd like to discuss more details with you!`);
+    setShowContactModal(true);
+  };
+
+  const confirmContact = async () => {
     setMessaging(true);
     try {
-      const { data } = await API.post('/conversations', { targetUserId: gig.userId });
+      const { data } = await API.post('/conversations', { 
+        targetUserId: gig.userId,
+        message: initialMessage 
+      });
       navigate(`/messages?conversationId=${data.id}`);
     } catch (err) {
       console.error('Message seller error:', err);
       navigate('/messages');
     } finally {
       setMessaging(false);
+      setShowContactModal(false);
     }
   };
 
@@ -265,6 +276,70 @@ export default function GigDetail() {
           </div>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      <AnimatePresence>
+        {showContactModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowContactModal(false)}
+              className="absolute inset-0 bg-obsidian-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg liquid-glass p-8 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-mint/10 flex items-center justify-center text-mint">
+                    <MessageSquare size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-display font-extrabold text-gray-900 dark:text-white leading-tight">Message {gig.user?.name}</h3>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Regarding: {gig.title}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Your Message</label>
+                  <textarea
+                    rows={5}
+                    value={initialMessage}
+                    onChange={(e) => setInitialMessage(e.target.value)}
+                    placeholder="Type your initial message..."
+                    className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-mint/20 transition-all resize-none"
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowContactModal(false)}
+                      className="flex-1 py-4 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={confirmContact}
+                      disabled={!initialMessage.trim() || messaging}
+                      className="flex-[2] btn-primary py-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {messaging 
+                        ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        : "Send Message & Start Chat"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Background Glow */}
+              <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-mint/10 rounded-full blur-[80px] -z-10" />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

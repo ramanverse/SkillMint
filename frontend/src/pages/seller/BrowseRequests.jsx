@@ -10,17 +10,31 @@ export default function BrowseRequests() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [contactingId, setContactingId] = useState(null);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [initialMessage, setInitialMessage] = useState('');
 
-  const handleContactClient = async (buyerId) => {
-    setContactingId(buyerId);
+  const handleContactClient = (request) => {
+    setSelectedRequest(request);
+    setInitialMessage(`Hi ${request.buyer?.name}, I saw your request for "${request.title}" and I would love to help you with it!`);
+    setShowContactModal(true);
+  };
+
+  const confirmContact = async () => {
+    if (!selectedRequest) return;
+    setContactingId(selectedRequest.buyerId);
     try {
-      const { data } = await API.post('/conversations', { targetUserId: buyerId });
+      const { data } = await API.post('/conversations', { 
+        targetUserId: selectedRequest.buyerId,
+        message: initialMessage 
+      });
       navigate(`/messages?conversationId=${data.id}`);
     } catch (err) {
       console.error('Contact client error:', err);
       navigate('/messages');
     } finally {
       setContactingId(null);
+      setShowContactModal(false);
     }
   };
 
@@ -131,7 +145,7 @@ export default function BrowseRequests() {
                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{req.buyer?.name}</span>
                    </div>
                     <button
-                      onClick={() => handleContactClient(req.buyerId)}
+                      onClick={() => handleContactClient(req)}
                       disabled={contactingId === req.buyerId}
                       className="btn-secondary py-2 px-4 text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 disabled:opacity-60"
                     >
@@ -145,6 +159,67 @@ export default function BrowseRequests() {
            ))}
         </div>
       )}
+      {/* Contact Modal */}
+      <AnimatePresence>
+        {showContactModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowContactModal(false)}
+              className="absolute inset-0 bg-obsidian-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg liquid-glass p-8 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-mint/10 flex items-center justify-center text-mint">
+                    <MessageSquare size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-display font-extrabold text-gray-900 dark:text-white leading-tight">Contact {selectedRequest?.buyer?.name}</h3>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Regarding: {selectedRequest?.title}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Your Message</label>
+                  <textarea
+                    rows={5}
+                    value={initialMessage}
+                    onChange={(e) => setInitialMessage(e.target.value)}
+                    placeholder="Describe how you can help with this request..."
+                    className="w-full bg-gray-50 dark:bg-white/5 border-none rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-mint/20 transition-all resize-none"
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowContactModal(false)}
+                      className="flex-1 py-4 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={confirmContact}
+                      disabled={!initialMessage.trim()}
+                      className="flex-[2] btn-primary py-4 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      Send Message & Contact
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Background Glow */}
+              <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-mint/10 rounded-full blur-[80px] -z-10" />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
