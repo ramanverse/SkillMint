@@ -67,29 +67,58 @@ export default function Messages() {
       const res = await API.get('/conversations');
       const sorted = sortByRecentActivity(res.data);
       setDirectConvos(sorted);
+      return sorted;
+    } catch (e) {
+      console.error(e);
+      return [];
+    } finally {
+      setDirectLoading(false);
+    }
+  }, []);
 
-      // Auto-open conversation if navigated from Contact Client / Message Seller
+  // Initial load and auto-selection
+  useEffect(() => {
+    const init = async () => {
+      const sorted = await loadDirectConversations();
+
       const targetId = searchParams.get('conversationId');
       if (targetId) {
         const target = sorted.find(c => c.id === targetId);
         if (target) {
           setTab('direct');
           setActiveDirectChat(target);
+
+          // Clean URL
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('conversationId');
+          setSearchParams(newParams, { replace: true });
+          return;
         }
-        // Always clean URL, but maybe wait until it's processed
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('conversationId');
-        setSearchParams(newParams);
-      } else if (!activeDirectChat && sorted.length > 0 && tab === 'direct') {
-        // Default to first if on direct tab and nothing active
+      }
+
+      // Default selection if nothing else active
+      if (!activeDirectChat && sorted.length > 0 && tab === 'direct') {
         setActiveDirectChat(sorted[0]);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setDirectLoading(false);
+    };
+
+    init();
+  }, [loadDirectConversations]); // Run once on mount or when loading logic changes
+
+  // Subsequent selection when tab changes or if conversationId appears later
+  useEffect(() => {
+    const targetId = searchParams.get('conversationId');
+    if (targetId && directConvos.length > 0) {
+      const target = directConvos.find(c => c.id === targetId);
+      if (target) {
+        setTab('direct');
+        setActiveDirectChat(target);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('conversationId');
+        setSearchParams(newParams, { replace: true });
+      }
     }
-  }, [searchParams, setSearchParams, activeDirectChat, tab]);
+  }, [searchParams, directConvos, setSearchParams]);
 
   const loadDirectMessages = useCallback(async (convId) => {
     try {
@@ -132,26 +161,26 @@ export default function Messages() {
   // Socket.io setup
   useEffect(() => {
     if (!user?.id) return;
+
+    // Kick off data loading separately
     loadDirectConversations();
     loadConversations();
 
     const socket = io(SOCKET_URL, {
-      auth: { token: localStorage.getItem('sm_token') },
+      auth: { token: sessionStorage.getItem('sm_demo_token') || localStorage.getItem('sm_token') },
       withCredentials: true,
-      transports: ['websocket', 'polling'],
+      // Let Socket.IO start with HTTP long-polling and then upgrade to WebSocket.
+      // Starting with WebSocket can produce noisy console errors if the WS handshake is briefly rejected.
+      transports: ['polling', 'websocket'],
     });
+
     socketRef.current = socket;
 
-    socket.on('connect', () => {
-      socket.emit('user_online');
-      if (activeChatRef.current?.id) socket.emit('join_room', activeChatRef.current.id);
-      if (activeDirectChatRef.current?.id) socket.emit('join_direct_room', activeDirectChatRef.current.id);
-    });
-
-    socket.on('connect_error', () => {
+    socket.on('connect', () => { /* ... */ });
+    socket.on('connect_error', (err) => {
+      console.error('Socket error:', err.message); // ← log the actual reason
       setError('Realtime chat is reconnecting...');
     });
-
     socket.on('online_users', (ids) => setOnlineUsers(new Set(ids)));
 
     // Order messages
@@ -174,8 +203,11 @@ export default function Messages() {
       )));
     });
 
-    return () => { socket.disconnect(); socketRef.current = null; };
-  }, [loadConversations, loadDirectConversations, user?.id]);
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [user?.id]);
 
   // Load messages when active chat changes
   useEffect(() => {
@@ -335,8 +367,8 @@ export default function Messages() {
               </p>
               {tab === 'direct' && (
                 <p className="text-xs text-gray-400 mt-2">
-                  {user?.role === 'SELLER' 
-                    ? 'Check available requests to contact potential clients' 
+                  {user?.role === 'SELLER'
+                    ? 'Check available requests to contact potential clients'
                     : 'Visit a freelancer profile to message them directly'}
                 </p>
               )}
@@ -352,9 +384,8 @@ export default function Messages() {
                 <button
                   key={chat.id}
                   onClick={() => currentSetActive(chat)}
-                  className={`w-full flex items-center gap-4 p-4 rounded-3xl transition-all group ${
-                    isActive ? 'bg-mint text-white shadow-xl shadow-mint/20' : 'hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
-                  }`}
+                  className={`w-full flex items-center gap-4 p-4 rounded-3xl transition-all group ${isActive ? 'bg-mint text-white shadow-xl shadow-mint/20' : 'hover:bg-gray-50 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
+                    }`}
                 >
                   <div className="relative flex-shrink-0">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg ${isActive ? 'bg-white/20' : 'bg-mint/10 text-mint'}`}>
@@ -431,11 +462,10 @@ export default function Messages() {
                       className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                     >
                       <div className="max-w-[70%] group relative">
-                        <div className={`px-6 py-4 rounded-[2rem] text-sm font-medium leading-relaxed ${
-                          isMe
-                            ? 'bg-mint text-white rounded-tr-none shadow-xl shadow-mint/10'
-                            : 'bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-100 dark:border-white/5'
-                        }`}>
+                        <div className={`px-6 py-4 rounded-[2rem] text-sm font-medium leading-relaxed ${isMe
+                          ? 'bg-mint text-white rounded-tr-none shadow-xl shadow-mint/10'
+                          : 'bg-gray-50 dark:bg-white/5 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-100 dark:border-white/5'
+                          }`}>
                           {msg.message}
                         </div>
                         <div className={`flex items-center gap-2 mt-2 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest scale-90 ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -487,9 +517,9 @@ export default function Messages() {
             <h3 className="text-2xl font-display font-extrabold text-gray-900 dark:text-white mb-3">Your Secure Workspace</h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-sm leading-relaxed mb-8">
               {tab === 'direct'
-                ? (user?.role === 'SELLER' 
-                    ? 'Select a client conversation or contact a client from Available Requests.' 
-                    : 'Select a conversation or visit any gig page to message a seller directly.')
+                ? (user?.role === 'SELLER'
+                  ? 'Select a client conversation or contact a client from Available Requests.'
+                  : 'Select a conversation or visit any gig page to message a seller directly.')
                 : 'Select an order-based conversation from the left to continue collaborating.'}
             </p>
           </div>

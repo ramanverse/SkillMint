@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
             senderId: socket.data.user.id,
             message: text,
           },
-          include: { 
+          include: {
             sender: { select: { id: true, name: true, profileImage: true } },
             order: { select: { buyerId: true, sellerId: true } }
           },
@@ -141,7 +141,7 @@ io.on('connection', (socket) => {
 
       // Emit to room for active chat window
       io.to(orderId).emit('new_message', saved);
-      
+
       // Emit to participants for sidebar/background updates
       io.to(`user_${saved.order.buyerId}`).to(`user_${saved.order.sellerId}`).emit('new_message', saved);
 
@@ -161,7 +161,7 @@ io.on('connection', (socket) => {
       });
       if (!conversation) return;
       if (conversation.buyerId !== socket.data.user.id && conversation.sellerId !== socket.data.user.id) return;
-      
+
       socket.join(`direct_${conversationId}`);
     } catch (err) {
       console.error('Join direct room error:', err);
@@ -188,7 +188,7 @@ io.on('connection', (socket) => {
       const [saved] = await prisma.$transaction([
         prisma.directMessage.create({
           data: { conversationId, senderId: socket.data.user.id, message: text },
-          include: { 
+          include: {
             sender: { select: { id: true, name: true, profileImage: true } },
             conversation: { select: { buyerId: true, sellerId: true } }
           },

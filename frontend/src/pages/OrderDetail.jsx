@@ -44,7 +44,7 @@ export default function OrderDetail() {
   useEffect(() => {
     if (!order) return;
     const socket = io(SOCKET_URL, {
-      auth: { token: localStorage.getItem('sm_token') },
+      auth: { token: sessionStorage.getItem('sm_demo_token') || localStorage.getItem('sm_token') },
       transports: ['websocket', 'polling'],
     });
     socketRef.current = socket;
@@ -181,9 +181,8 @@ export default function OrderDetail() {
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-mint to-mint-dark flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                       {msg.sender?.name?.[0]?.toUpperCase()}
                     </div>
-                    <div className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm ${
-                      isMe ? 'bg-mint text-white rounded-br-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'
-                    }`}>
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm ${isMe ? 'bg-mint text-white rounded-br-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm shadow-sm'
+                      }`}>
                       {msg.message}
                       <div className={`text-xs mt-1 ${isMe ? 'text-white/60' : 'text-gray-400'}`}>
                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
