@@ -1,6 +1,15 @@
-// Helpers for SQLite JSON array fields
-// SQLite doesn't support native arrays, so we store them as JSON strings
+/**
+ * ==========================================
+ * SkillMint Serializer & JSON Utilities
+ * ==========================================
+ * Standardizes database input/output transformations:
+ * Parses JSON array string data safely to real arrays for client payloads.
+ */
 
+/**
+ * User record parser serializer:
+ * Decodes serialized 'skills' lists into standard client JSON arrays.
+ */
 export function serializeUser(user) {
   if (!user) return user;
   return {
@@ -9,6 +18,10 @@ export function serializeUser(user) {
   };
 }
 
+/**
+ * Gig record parser serializer:
+ * Decodes tags, images, nested users, and pricing packages arrays.
+ */
 export function serializeGig(gig) {
   if (!gig) return gig;
   return {
@@ -20,12 +33,18 @@ export function serializeGig(gig) {
   };
 }
 
+/**
+ * Robust JSON parsing utility with standard fallback mechanisms.
+ */
 export function parseJson(val, fallback = []) {
   if (Array.isArray(val)) return val;
   if (!val) return fallback;
   try { return JSON.parse(val); } catch { return fallback; }
 }
 
+/**
+ * Array parser converting JavaScript lists to db-compatible JSON strings.
+ */
 export function stringifyArray(arr) {
   if (!arr) return '[]';
   if (typeof arr === 'string') return arr;
